@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
+from pydantic import BaseModel
 from app.db.database import SessionLocal, Base, engine
 from sqlalchemy import select, delete
 from app.db.models.core_models import Usuario, Rol, Membresia, Hijo
@@ -55,15 +56,22 @@ def inspect():
     finally:
         db.close()
 
+# ---------- Crear hijo por BODY JSON (DEV) ----------
+
+class DevChildCreate(BaseModel):
+    usuario_id: int
+    nombre: str = "Peque 2"
+
 @router.post("/children", summary="Crear Hijo para un usuario (DEV)")
-def create_child(usuario_id: int, nombre: str = "Peque 2"):
+def create_child(payload: DevChildCreate):
     db = SessionLocal()
     try:
-        u = db.get(Usuario, usuario_id)
-        if not u: raise HTTPException(404, "Usuario no existe")
-        h = Hijo(nombre=nombre, usuario_id=usuario_id)
+        u = db.get(Usuario, payload.usuario_id)
+        if not u:
+            raise HTTPException(status_code=404, detail="Usuario no existe")
+        h = Hijo(nombre=payload.nombre, usuario_id=payload.usuario_id)
         db.add(h); db.commit(); db.refresh(h)
-        return {"ok": True, "hijo_id": h.id}
+        return {"ok": True, "hijo": {"id": h.id, "nombre": h.nombre, "usuario_id": h.usuario_id}}
     finally:
         db.close()
 
@@ -87,13 +95,11 @@ def delete_child(child_id: int):
     try:
         h = db.get(Hijo, child_id)
         if not h: raise HTTPException(404, "Hijo no existe")
-        # borrar items asociados a loncheras del hijo
         lns = db.scalars(select(Lonchera.id).where(Lonchera.hijo_id == child_id)).all()
         if lns:
             db.execute(delete(LoncheraAlimento).where(LoncheraAlimento.lonchera_id.in_(lns)))
             db.execute(delete(Lonchera).where(Lonchera.id.in_(lns)))
-        db.delete(h); db.commit()
-        return
+        db.delete(h); db.commit(); return
     finally:
         db.close()
 
@@ -135,7 +141,6 @@ def delete_user(user_id: int):
     try:
         u = db.get(Usuario, user_id)
         if not u: raise HTTPException(404, "Usuario no existe")
-        # borrar todo lo del usuario
         child_ids = db.scalars(select(Hijo.id).where(Hijo.usuario_id == user_id)).all()
         if child_ids:
             ln_ids = db.scalars(select(Lonchera.id).where(Lonchera.hijo_id.in_(child_ids))).all()
@@ -167,7 +172,6 @@ def clear_business_data():
 
 @router.post("/reset-db", summary="Recrear BD desde cero (PELIGRO: borra todo)")
 def reset_db():
-    # SOLO para desarrollo
     Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
     return {"ok": True, "msg": "Base de datos recreada"}
