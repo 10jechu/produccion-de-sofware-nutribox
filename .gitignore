@@ -1,0 +1,25 @@
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+
+cat > .gitignore << 'EOF'
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.dll
+.env
+.venv/
+venv/
+ENV/
+.vscode/
+.idea/
+*.db
+.coverage
+htmlcov/
+.pytest_cache/
+node_modules/
+dist/
