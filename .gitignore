@@ -1,25 +1,22 @@
+# Python
 __pycache__/
-*.py[cod]
+*.pyc
 *.pyo
 *.pyd
-*.so
 
-cat > .gitignore << 'EOF'
-__pycache__/
-*.py[cod]
-*.pyo
-*.pyd
-*.so
-*.dll
-.env
+# Virtual env
 .venv/
+env/
 venv/
-ENV/
+
+# IDE/OS
 .vscode/
-.idea/
+.DS_Store
+
+# DB / data
 *.db
-.coverage
-htmlcov/
-.pytest_cache/
-node_modules/
+*.sqlite3
+
+# Build
 dist/
+build/
