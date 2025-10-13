@@ -8,6 +8,12 @@ class DireccionCreate(BaseModel):
     barrio: str = ""
     ciudad: str = "Bogotá"
 
+class DireccionUpdate(BaseModel):
+    etiqueta: str | None = None
+    direccion: str | None = None
+    barrio: str | None = None
+    ciudad: str | None = None
+
 class DireccionRead(ORMModel):
     id: int
     usuario_id: int
