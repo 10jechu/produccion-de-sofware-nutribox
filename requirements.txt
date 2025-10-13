@@ -7,3 +7,5 @@ passlib[bcrypt]
 psycopg2-binary
 httpx
 pytest
+
+pydantic-settings
