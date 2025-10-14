@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from app.db.models.restriction import Restriccion
 
 def list_(db: Session, hijo_id: int | None = None) -> list[Restriccion]:
@@ -39,6 +39,30 @@ def update(db: Session, restriccion_id: int, payload) -> Restriccion:
         raise ValueError("alergia requiere alimento_id")
     if tipo == "prohibido" and not (texto and str(texto).strip()):
         raise ValueError("prohibido requiere texto")
+
+    # --- Duplicados (post-merge de datos) ---
+    if tipo == "alergia":
+        dup = db.scalar(
+            select(Restriccion).where(
+                (Restriccion.hijo_id == obj.hijo_id) &
+                (Restriccion.tipo == "alergia") &
+                (Restriccion.alimento_id == alimento_id) &
+                (Restriccion.id != obj.id)
+            )
+        )
+        if dup:
+            raise ValueError("Esta alergia ya está registrada para el hijo")
+    elif tipo == "prohibido":
+        dup = db.scalar(
+            select(Restriccion).where(
+                (Restriccion.hijo_id == obj.hijo_id) &
+                (Restriccion.tipo == "prohibido") &
+                (Restriccion.texto == texto) &
+                (Restriccion.id != obj.id)
+            )
+        )
+        if dup:
+            raise ValueError("Esta restricción de 'prohibido' ya existe para el hijo")
 
     obj.tipo = tipo
     obj.alimento_id = alimento_id
