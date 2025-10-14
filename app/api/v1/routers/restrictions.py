@@ -4,7 +4,7 @@ from app.core.deps import get_db
 from app.db.schemas.restriction import RestriccionCreate, RestriccionRead, RestriccionUpdate
 from app.crud import restriction as crud
 
-router = APIRouter()
+router = APIRouter(prefix="/restrictions", tags=["restrictions"])
 
 @router.get("/", response_model=list[RestriccionRead])
 def list_restrictions(hijo_id: int | None = None, db: Session = Depends(get_db)):

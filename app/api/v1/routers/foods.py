@@ -4,7 +4,7 @@ from app.core.deps import get_db
 from app.db.schemas.food import AlimentoCreate, AlimentoUpdate, AlimentoRead
 from app.crud import alimento as crud
 
-router = APIRouter()
+router = APIRouter(prefix="/foods", tags=["foods"])
 
 @router.get("/", response_model=list[AlimentoRead])
 def list_foods(only_active: bool = True, db: Session = Depends(get_db)):

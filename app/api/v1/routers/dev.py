@@ -7,7 +7,7 @@ from app.db.models.address import Direccion
 from app.db.models.alimento import Alimento
 from app.db.models.lunchbox import Lonchera, LoncheraAlimento
 
-router = APIRouter()
+router = APIRouter(prefix="/dev", tags=["dev"])
 
 # ---------- Seeds / Inspect ----------
 

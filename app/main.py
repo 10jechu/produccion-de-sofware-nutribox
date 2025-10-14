@@ -10,7 +10,15 @@ import app.db.models  # noqa: F401
 Base.metadata.create_all(bind=engine)
 
 # FastAPI app
-app = FastAPI(title="NutriBox API")
+tags_metadata = [
+    {"name": "auth",         "description": "Registro e inicio de sesión"},
+    {"name": "foods",        "description": "Catálogo de alimentos"},
+    {"name": "lunchboxes",   "description": "Loncheras e items"},
+    {"name": "addresses",    "description": "Direcciones de envío"},
+    {"name": "restrictions", "description": "Restricciones alimentarias"},
+    {"name": "dev",          "description": "Herramientas para desarrollo"},
+]
+app = FastAPI(openapi_tags=tags_metadata, title="NutriBox API")
 
 @app.get("/")
 def health():

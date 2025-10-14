@@ -8,7 +8,7 @@ from app.db.schemas.lunchbox import (
 )
 from app.crud import lunchbox as crud
 
-router = APIRouter()
+router = APIRouter(prefix="/lunchboxes", tags=["lunchboxes"])
 
 @router.get("/", response_model=list[LoncheraRead])
 def list_lunchboxes(hijo_id: int | None = None, db: Session = Depends(get_db)):

@@ -4,7 +4,7 @@ from app.core.deps import get_db
 from app.db.schemas.address import DireccionCreate, DireccionRead, DireccionUpdate
 from app.crud import address as crud
 
-router = APIRouter()
+router = APIRouter(prefix="/addresses", tags=["addresses"])
 
 @router.get("/", response_model=list[DireccionRead])
 def list_addresses(usuario_id: int, db: Session = Depends(get_db)):
