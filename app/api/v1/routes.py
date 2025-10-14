@@ -9,3 +9,4 @@ api_router.include_router(restrictions.router, prefix="/restrictions", tags=["re
 api_router.include_router(dev.router,          prefix="/dev",          tags=["dev"])
 
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
+api_router.include_router(auth.router, prefix="/api/v1/auth")
