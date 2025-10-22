@@ -1,17 +1,16 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import Integer, String, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base_class import Base
 
 class Restriccion(Base):
     __tablename__ = "restricciones"
     
-    id = Column(Integer, primary_key=True, index=True)
-    hijo_id = Column(Integer, ForeignKey("hijos.id"), nullable=False, index=True)
-    tipo = Column(String(20), nullable=False)  # 'alergia' o 'prohibido'
-    alimento_id = Column(Integer, ForeignKey("alimentos.id"), nullable=True)
-    texto = Column(String(200), nullable=True)
-    motivo = Column(String(255), nullable=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
+    hijo_id: Mapped[int] = mapped_column(ForeignKey("hijos.id", ondelete="CASCADE"), index=True, nullable=False)
+    tipo: Mapped[str] = mapped_column(String(20), nullable=False)  # 'alergia' o 'prohibido'
+    alimento_id: Mapped[int | None] = mapped_column(ForeignKey("alimentos.id"), index=True, nullable=True)  # Para tipo='alergia'
+    texto: Mapped[str | None] = mapped_column(String(255), nullable=True)  # Para tipo='prohibido'
     
-    # Relationships
-    hijo = relationship("Hijo", back_populates="restricciones")
-    alimento = relationship("Alimento")
+    # Relaciones
+    hijo: Mapped["Hijo"] = relationship("Hijo", back_populates="restricciones")
+    alimento: Mapped["Alimento"] = relationship("Alimento")
