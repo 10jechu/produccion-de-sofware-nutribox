@@ -20,3 +20,8 @@ venv/
 # Build
 dist/
 build/
+
+# Backups locales
+app_backup_*/
+backups_models/
+*.bak

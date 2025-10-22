@@ -1,12 +1,13 @@
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import Integer, String, Boolean, Float
-from app.db.database import Base
+from typing import List, Optional
+from sqlmodel import Relationship
+from typing import List
+from typing import Optional
+from sqlmodel import SQLModel, Field, Relationship
+from sqlalchemy.orm import relationship
 
-class Alimento(Base):
+class Alimento(SQLModel, table=True):
     __tablename__ = "alimentos"
-    id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
-    nombre: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
-    kcal: Mapped[float] = mapped_column(Float, nullable=False)
-    proteinas: Mapped[float] = mapped_column(Float, nullable=False)
-    carbos: Mapped[float] = mapped_column(Float, nullable=False)
-    activo: Mapped[bool] = mapped_column(Boolean, default=True)
+    id: Optional[int] = Field(default=None, primary_key=True)
+    nombre: str
+    calorias: int
+    loncheras: List["LoncheraAlimento"] = Relationship(back_populates="alimento", sa_relationship_kwargs={"cascade":"all, delete-orphan"})
