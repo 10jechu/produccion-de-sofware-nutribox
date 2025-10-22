@@ -25,3 +25,4 @@ build/
 app_backup_*/
 backups_models/
 *.bak
+nul
