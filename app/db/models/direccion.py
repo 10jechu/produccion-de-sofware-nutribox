@@ -1,15 +1,14 @@
-from sqlmodel import Relationship
-from sqlalchemy import ForeignKey
 from typing import Optional
 from sqlmodel import SQLModel, Field, Relationship
-from .usuario import Usuario
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, ForeignKey
 
 class Direccion(SQLModel, table=True):
+    __tablename__ = "direcciones"
+
     id: Optional[int] = Field(default=None, primary_key=True)
+    alias: str
     calle: str
     ciudad: str
-    usuario_id: Optional[int] = Field(foreign_key="usuario.id")
-    usuario: Optional[Usuario] = Relationship(back_populates="direccions")
-    usuario_id = Column(Integer, ForeignKey('usuarios.id'), nullable=False, index=True)
-    usuario = relationship('Usuario', back_populates='direcciones')
+    usuario_id: int = Field(sa_column=Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True))
+
+    usuario: "Usuario" = Relationship(back_populates="direcciones")

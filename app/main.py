@@ -2,15 +2,14 @@ from fastapi import FastAPI
 from app.api.v1.routes import api_router
 from app.db.session import init_db
 
-app = FastAPI(title="NutriBox API", version="1.0.0")
+app = FastAPI()
 
-# Inicializa BD (crea tablas si no existen)
-init_db()
+@app.on_event("startup")
+def on_startup():
+    init_db()
 
-# Rutas v1
-app.include_router(api_router)
-
-# Healthcheck simple
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status":"ok"}
+
+app.include_router(api_router)

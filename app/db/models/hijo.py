@@ -1,21 +1,14 @@
-from typing import List
-from sqlmodel import Relationship
+from typing import Optional, List
+from sqlmodel import SQLModel, Field, Relationship
+from sqlalchemy import Column, Integer, ForeignKey
 
-from sqlalchemy import Column, Integer, String, Date, ForeignKey
-from sqlalchemy.orm import relationship
-from app.db.database import Base
-
-class Hijo(Base):
+class Hijo(SQLModel, table=True):
     __tablename__ = "hijos"
 
-    id = Column(Integer, primary_key=True, index=True)
-    nombre = Column(String(100), nullable=False)
-    fecha_nacimiento = Column(Date, nullable=True)
+    id: Optional[int] = Field(default=None, primary_key=True)
+    nombre: str
+    fecha_nacimiento: str  # puedes cambiar a date más adelante
+    usuario_id: int = Field(sa_column=Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True))
 
-    # FK a usuarios.id (tabla 'usuarios')
-    usuario_id = Column(Integer, ForeignKey("usuarios.id", ondelete="CASCADE"), nullable=False, index=True)
-
-    # Relación inversa con Usuario
     usuario: "Usuario" = Relationship(back_populates="hijos")
-    usuario: "Usuario" = Relationship(back_populates="hijos")
-    loncheras: List["Lonchera"] = Relationship(back_populates="hijo", sa_relationship_kwargs={"cascade":"all, delete-orphan"})
+    loncheras: List["Lonchera"] = Relationship(back_populates="hijo", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
