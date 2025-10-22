@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Body
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from app.core.deps import get_db
+from app.core.deps import get_session
 from app.core.security import create_access_token, get_password_hash, verify_password
 from app.db.schemas.auth import Token, UserRegister
 from app.db.models.core_models import Rol, Membresia, Usuario
@@ -26,7 +26,7 @@ def _get_or_create_membership(db: Session, tipo: str) -> Membresia:
 @router.post("/register", summary="Register", status_code=201)
 async def register(
     request: Request,
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_session),
     payload: UserRegister | None = Body(default=None)  # mantiene schema en Swagger
 ):
     # 1) Obtener datos (JSON o FORM). Si Swagger envía JSON, payload ya viene.
@@ -66,7 +66,7 @@ async def register(
     return {"id": u.id, "email": u.email}
 
 @router.post("/login", response_model=Token, summary="Login")
-def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_session)):
     user = db.query(Usuario).filter_by(email=form.username).first()
     if not user or not verify_password(form.password, user.hash_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas")

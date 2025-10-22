@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from sqlmodel import Session, select
-from app.db.session import engine
+from app.db.session import get_session
 from app.db.models.inventario_movimiento import Inventario_Movimiento
 
 router = APIRouter(prefix="/api/v1/inventario_movimientos", tags=["11 - Inventario_Movimientos"])

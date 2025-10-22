@@ -1,11 +1,17 @@
-from typing import Optional, List
-from sqlmodel import SQLModel, Field, Relationship
-from .hijo import Hijo
+from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship
+from app.db.base_class import Base
 
-class Restriccion(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    tipo: str
-    hijo_id: Optional[int] = Field(foreign_key="hijo.id")
-    hijo: Optional[Hijo] = Relationship(back_populates="restriccions")
-    excepcions: List["Excepcion"] = Relationship(back_populates="restriccion")
+class Restriccion(Base):
+    __tablename__ = "restricciones"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    hijo_id = Column(Integer, ForeignKey("hijos.id"), nullable=False, index=True)
+    tipo = Column(String(20), nullable=False)  # 'alergia' o 'prohibido'
+    alimento_id = Column(Integer, ForeignKey("alimentos.id"), nullable=True)
+    texto = Column(String(200), nullable=True)
+    motivo = Column(String(255), nullable=True)
+    
+    # Relationships
+    hijo = relationship("Hijo", back_populates="restricciones")
+    alimento = relationship("Alimento")

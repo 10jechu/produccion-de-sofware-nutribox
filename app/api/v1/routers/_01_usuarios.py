@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from datetime import datetime
 from passlib.context import CryptContext
 
-from app.db.session import get_db
+from app.db.session import get_session
 from app.schemas import UsuarioCreate, UsuarioRead
 from app.db.models.usuario import Usuario# modelo SQLAlchemy real
 
@@ -12,7 +12,7 @@ router = APIRouter(prefix="/api/v1/usuarios", tags=["usuarios"])
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 @router.post("/", response_model=UsuarioRead, status_code=status.HTTP_201_CREATED)
-def crear_usuario(payload: UsuarioCreate, db: Session = Depends(get_db)):
+def crear_usuario(payload: UsuarioCreate, db: Session = Depends(get_session)):
     # Normaliza datos desde schema (acepta correo/email, contrasena/password)
     email = payload.email
     nombre = payload.nombre

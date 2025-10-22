@@ -1,12 +1,19 @@
-from .usuario import Usuario
-from .hijo import Hijo
-from .alimento import Alimento
-from .lonchera import Lonchera
-from .lonchera_alimento import LoncheraAlimento
-from .direccion import Direccion
+from app.db.base_class import Base
+from app.db.models.core_models import Rol, Membresia, Usuario, Hijo
+from app.db.models.alimento import Alimento
+from app.db.models.lonchera import Lonchera, LoncheraAlimento
+from app.db.models.direccion import Direccion
+from app.db.models.restriccion import Restriccion
 
 __all__ = [
-    "Usuario","Hijo","Alimento",
-    "Lonchera","LoncheraAlimento",
+    "Base",
+    "Rol",
+    "Membresia",
+    "Usuario",
+    "Hijo",
+    "Alimento",
+    "Lonchera",
+    "LoncheraAlimento",
     "Direccion",
+    "Restriccion",
 ]

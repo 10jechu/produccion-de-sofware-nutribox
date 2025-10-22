@@ -1,0 +1,5 @@
+from enum import Enum
+from sqlalchemy.orm import relationship
+class RoleEnum(str, Enum):
+    admin = "admin"
+    parent = "parent"

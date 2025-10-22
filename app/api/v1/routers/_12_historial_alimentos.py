@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from sqlmodel import Session, select
-from app.db.session import engine
+from app.db.session import get_session
 from app.db.models.historial_alimento import Historial_Alimento
 
 router = APIRouter(prefix="/api/v1/historial_alimentos", tags=["12 - Historial_Alimentos"])

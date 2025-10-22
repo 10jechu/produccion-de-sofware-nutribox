@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy import inspect
 
-from app.db.session import get_db
+from app.db.session import get_session
 from app.schemas import AlimentoCreate, AlimentoUpdate, AlimentoRead
 from app.db.models.alimento import Alimento  # ajusta si tu clase está en otro módulo
 
@@ -36,7 +36,7 @@ def _apply_mapping(payload_dict: dict, cols: set):
     return data
 
 @router.post("/", response_model=AlimentoRead, status_code=status.HTTP_201_CREATED)
-def crear_alimento(payload: AlimentoCreate, db: Session = Depends(get_db)):
+def crear_alimento(payload: AlimentoCreate, db: Session = Depends(get_session)):
     cols = _cols()
     data_in = payload.model_dump(by_alias=True)  # admite alias EN
     data = _apply_mapping(data_in, cols)
@@ -53,18 +53,18 @@ def crear_alimento(payload: AlimentoCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"SQLAlchemyError: {e.__class__.__name__}: {e}")
 
 @router.get("/", response_model=list[AlimentoRead])
-def listar_alimentos(db: Session = Depends(get_db)):
+def listar_alimentos(db: Session = Depends(get_session)):
     return db.query(Alimento).all()
 
 @router.get("/{id}", response_model=AlimentoRead)
-def obtener_alimento(id: int, db: Session = Depends(get_db)):
+def obtener_alimento(id: int, db: Session = Depends(get_session)):
     obj = db.get(Alimento, id)
     if not obj:
         raise HTTPException(status_code=404, detail="Alimento no encontrado")
     return obj
 
 @router.patch("/{id}", response_model=AlimentoRead)
-def actualizar_alimento(id: int, payload: AlimentoUpdate, db: Session = Depends(get_db)):
+def actualizar_alimento(id: int, payload: AlimentoUpdate, db: Session = Depends(get_session)):
     obj = db.get(Alimento, id)
     if not obj:
         raise HTTPException(status_code=404, detail="Alimento no encontrado")
@@ -83,7 +83,7 @@ def actualizar_alimento(id: int, payload: AlimentoUpdate, db: Session = Depends(
         raise HTTPException(status_code=400, detail=f"IntegrityError: {getattr(e, 'orig', e)}")
 
 @router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def eliminar_alimento(id: int, db: Session = Depends(get_db)):
+def eliminar_alimento(id: int, db: Session = Depends(get_session)):
     obj = db.get(Alimento, id)
     if not obj:
         raise HTTPException(status_code=404, detail="Alimento no encontrado")

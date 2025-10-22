@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from sqlmodel import Session, select
-from app.db.session import engine
+from app.db.session import get_session
 from app.db.models.excepcion import Excepcion
 
 router = APIRouter(prefix="/api/v1/excepcions", tags=["09 - Excepciones"])
