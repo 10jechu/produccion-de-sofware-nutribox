@@ -10,10 +10,17 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
+class UserUpdate(BaseModel):
+    nombre: str | None = None
+    email: EmailStr | None = None
+    activo: bool | None = None
+    membresia_id: int | None = None
+
 class UserRead(ORMModel):
     id: int
     nombre: str
     email: EmailStr
+    activo: bool
     rol_id: int | None = None
     membresia_id: int | None = None
 

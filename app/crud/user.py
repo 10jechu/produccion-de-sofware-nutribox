@@ -1,7 +1,41 @@
-# app/crud/user.py
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 from app.db.models.core_models import Usuario, Rol, Membresia
-from app.core.security import hash_password
+from app.core.security import get_password_hash
+
+def list_all(db: Session, skip: int = 0, limit: int = 100) -> list[Usuario]:
+    """Lista todos los usuarios con paginación."""
+    return db.scalars(select(Usuario).offset(skip).limit(limit)).all()
+
+def get_by_id(db: Session, user_id: int) -> Usuario | None:
+    """Obtiene un usuario por ID."""
+    return db.get(Usuario, user_id)
+
+def get_by_email(db: Session, email: str) -> Usuario | None:
+    """Obtiene un usuario por email."""
+    return db.scalar(select(Usuario).where(Usuario.email == email))
+
+def update(db: Session, obj: Usuario, payload) -> Usuario:
+    """Actualiza un usuario."""
+    data = payload.model_dump(exclude_none=True)
+    
+    # Validar email único si se está cambiando
+    if "email" in data and data["email"] != obj.email:
+        existing = get_by_email(db, data["email"])
+        if existing:
+            raise ValueError("El email ya está registrado")
+    
+    for k, v in data.items():
+        setattr(obj, k, v)
+    
+    db.commit()
+    db.refresh(obj)
+    return obj
+
+def deactivate(db: Session, obj: Usuario) -> None:
+    """Desactiva un usuario (soft delete)."""
+    obj.activo = False
+    db.commit()
 
 def _get_or_create_default_role(db: Session, nombre="Usuario") -> Rol:
     rol = db.query(Rol).filter_by(nombre=nombre).first()
@@ -31,7 +65,7 @@ def create(
     u = Usuario(
         nombre=nombre,
         email=email,
-        hash_password=hash_password(password),
+        hash_password=get_password_hash(password),
         rol_id=rol.id,
         membresia_id=mem.id,
     )
