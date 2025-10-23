@@ -2,43 +2,33 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1.routes import api_router
-from app.db.session import engine
-from app.db.models import Base
+from app.db.session import init_db
 
-# Crear todas las tablas
-Base.metadata.create_all(bind=engine)
+# Inicializar BD al importar
+init_db()
 
-# FastAPI app
 app = FastAPI(
-    title=settings.PROJECT_NAME,
-    version=settings.VERSION,
-    description="API REST para gestión de loncheras escolares",
-    openapi_tags=[
-        {"name": "auth", "description": "Autenticación y registro"},
-        {"name": "alimentos", "description": "Gestión de alimentos"},
-        {"name": "loncheras", "description": "Gestión de loncheras"},
-    ]
+    title="NutriBox API",
+    version="2.0.0",
+    description="API para gestión de loncheras escolares"
 )
 
 # CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origins=["http://127.0.0.1:8000", "http://localhost:8000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Health check
-@app.get("/", tags=["health"])
-def health_check():
-    """Endpoint de salud"""
-    return {
-        "status": "ok",
-        "project": settings.PROJECT_NAME,
-        "version": settings.VERSION,
-        "environment": settings.ENV
-    }
+@app.get("/")
+def health():
+    return {"status": "ok", "message": "NutriBox API is running"}
 
-# Incluir routers
-app.include_router(api_router)
+@app.get("/health")
+def health_check():
+    return {"status": "healthy"}
+
+# Incluir rutas
+app.include_router(api_router, prefix="/api/v1")
