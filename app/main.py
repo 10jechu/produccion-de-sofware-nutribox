@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.db.database import Base, engine
 
@@ -21,6 +22,15 @@ app = FastAPI(
     description="Plataforma para gestion de loncheras escolares",
     version="1.0.0",
     openapi_tags=tags_metadata
+)
+
+# AGREGAR CORS - ESTO ES LO IMPORTANTE
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # En producción cambiar por dominios específicos
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 @app.get("/", tags=["health"])
