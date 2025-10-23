@@ -4,6 +4,9 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+class TokenData(BaseModel):
+    email: str | None = None
+
 class UserRegister(BaseModel):
     full_name: str = Field(min_length=2, alias="nombre")
     email: EmailStr
