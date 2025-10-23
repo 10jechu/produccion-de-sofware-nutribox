@@ -1,34 +1,31 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.core.config import settings
 from app.api.v1.routes import api_router
 from app.db.session import init_db
 
-# Inicializar BD al importar
-init_db()
+app = FastAPI(title="NutriBox API", version="2.1.0")
 
-app = FastAPI(
-    title="NutriBox API",
-    version="2.0.0",
-    description="API para gestión de loncheras escolares"
-)
-
-# CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:8000", "http://localhost:8000"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+@app.on_event("startup")
+def on_startup():
+    try:
+        init_db()
+    except Exception as e:
+        print(f"⚠️ DB Warning: {e}")
+
 @app.get("/")
-def health():
-    return {"status": "ok", "message": "NutriBox API is running"}
+def root():
+    return {"status": "ok"}
 
 @app.get("/health")
-def health_check():
-    return {"status": "healthy"}
+def health():
+    return {"status": "ok"}
 
-# Incluir rutas
-app.include_router(api_router, prefix="/api/v1")
+app.include_router(api_router)
