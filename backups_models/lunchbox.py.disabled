@@ -1,7 +1,8 @@
 from datetime import date
 from sqlalchemy import Integer, String, Float, Date, ForeignKey, UniqueConstraint
-from sqlalchemy.orm import Mapped, mapped_column
-from app.db.database import Base
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from app.db.base_class import Base
+from sqlalchemy.orm import relationship
 
 class Lonchera(Base):
     __tablename__ = "loncheras"
@@ -10,6 +11,7 @@ class Lonchera(Base):
     fecha: Mapped[date] = mapped_column(Date, nullable=False)
     estado: Mapped[str] = mapped_column(String(20), default="Borrador")
     direccion_id: Mapped[int | None] = mapped_column(ForeignKey("direcciones.id"), index=True, nullable=True)
+    hijo = relationship("Hijo", back_populates="loncheras")
 
 class LoncheraAlimento(Base):
     __tablename__ = "lonchera_alimento"

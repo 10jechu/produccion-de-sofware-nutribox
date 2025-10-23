@@ -1,12 +1,19 @@
 from fastapi import APIRouter
-from app.api.v1.routers import auth, foods, lunchboxes, addresses, restrictions, dev
+import importlib
+import pkgutil
+import app.api.v1.routers as routers_pkg
+from app.api.v1.endpoints import auth
 
-api_router = APIRouter(prefix="/api/v1")
+api_router = APIRouter()
 
-# Montar cada router una sola vez, sin prefijos extra
+# Incluir auth primero
 api_router.include_router(auth.router)
-api_router.include_router(foods.router)
-api_router.include_router(lunchboxes.router)
-api_router.include_router(addresses.router)
-api_router.include_router(restrictions.router)
-api_router.include_router(dev.router)
+
+# Incluir el resto de routers (los que empiezan con _)
+for _, modname, ispkg in pkgutil.iter_modules(routers_pkg.__path__):
+    if not modname.startswith("_"):
+        continue
+    module = importlib.import_module(f"app.api.v1.routers.{modname}")
+    router = getattr(module, "router", None)
+    if router is not None:
+        api_router.include_router(router)

@@ -1,0 +1,6 @@
+from enum import Enum
+from sqlalchemy.orm import relationship
+class TipoMembresiaEnum(str, Enum):
+    basico = "basico"
+    estandar = "estandar"
+    premium = "premium"

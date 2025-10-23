@@ -1,21 +1,18 @@
-
-from pydantic import BaseModel, EmailStr, field_validator
-from typing import Literal
+from pydantic import BaseModel, EmailStr, Field
 
 class Token(BaseModel):
     access_token: str
-    token_type: str = "bearer"
+    token_type: str
+
+class TokenData(BaseModel):
+    email: str | None = None
 
 class UserRegister(BaseModel):
-    nombre: str
+    full_name: str = Field(min_length=2, alias="nombre")
     email: EmailStr
-    password: str
-    membresia: Literal["Free", "Premium"] = "Free"
-    rol: Literal["Usuario", "Admin"] = "Usuario"
-
-    @field_validator("password")
-    @classmethod
-    def validate_password(cls, v: str) -> str:
-        if len(v) < 6:
-            raise ValueError("La contraseña debe tener al menos 6 caracteres")
-        return v
+    password: str = Field(min_length=8, alias="contrasena")
+    rol: str = Field(default="Usuario")
+    membresia: str = Field(default="Free")
+    
+    class Config:
+        populate_by_name = True

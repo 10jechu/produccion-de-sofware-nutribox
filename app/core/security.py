@@ -1,4 +1,3 @@
-
 import os
 from datetime import datetime, timedelta
 from typing import Any, Dict
@@ -7,7 +6,7 @@ import jwt
 from fastapi import HTTPException, status
 from passlib.context import CryptContext
 
-# Claves/config básicas (ajústalas para producción)
+# Claves/config básicas
 SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-key-change-me")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 8

@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import Integer, String, ForeignKey
-from app.db.database import Base
+from app.db.base_class import Base
+from sqlalchemy.orm import relationship
 
 class Direccion(Base):
     __tablename__ = "direcciones"
