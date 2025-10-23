@@ -1,21 +1,26 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, ConfigDict
 from typing import Optional
 
 class AlimentoCreate(BaseModel):
-    nombre: str = Field(alias="name")
-    calorias: int = Field(ge=0, alias="calories")
-    unidad: str = Field(default="g", alias="unit")
-    model_config = ConfigDict(populate_by_name=True)
+    nombre: str
+    calorias: int = 0
+    proteinas: float = 0.0
+    carbohidratos: float = 0.0
+    unidad: str = "g"
 
 class AlimentoUpdate(BaseModel):
-    nombre: Optional[str] = Field(default=None, alias="name")
-    calorias: Optional[int] = Field(default=None, ge=0, alias="calories")
-    unidad: Optional[str] = Field(default=None, alias="unit")
-    model_config = ConfigDict(populate_by_name=True)
+    nombre: Optional[str] = None
+    calorias: Optional[int] = None
+    proteinas: Optional[float] = None
+    carbohidratos: Optional[float] = None
+    unidad: Optional[str] = None
 
 class AlimentoRead(BaseModel):
     id: int
     nombre: str
     calorias: int
+    proteinas: float
+    carbohidratos: float
     unidad: str
+    activo: bool
     model_config = ConfigDict(from_attributes=True)

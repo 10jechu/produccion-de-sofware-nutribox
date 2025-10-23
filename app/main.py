@@ -3,7 +3,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.routes import api_router
 from app.db.session import init_db
 
-app = FastAPI(title="NutriBox API", version="2.1.0")
+app = FastAPI(
+    title="NutriBox API",
+    version="2.1.0",
+    description="API para gestión de loncheras escolares"
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -15,17 +19,10 @@ app.add_middleware(
 
 @app.on_event("startup")
 def on_startup():
-    try:
-        init_db()
-    except Exception as e:
-        print(f"⚠️ DB Warning: {e}")
-
-@app.get("/")
-def root():
-    return {"status": "ok"}
+    init_db()
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "version": "2.1.0"}
 
 app.include_router(api_router)
