@@ -8,26 +8,25 @@ import app.db.models
 Base.metadata.create_all(bind=engine)
 
 tags_metadata = [
-    {"name": "auth", "description": "Registro e inicio de sesion"},
-    {"name": "users", "description": "Gestion de usuarios (Admin)"},
-    {"name": "children", "description": "Gestion de hijos"},
-    {"name": "foods", "description": "Catalogo de alimentos"},
-    {"name": "lunchboxes", "description": "Loncheras e items"},
-    {"name": "addresses", "description": "Direcciones de envio"},
-    {"name": "restrictions", "description": "Restricciones alimentarias"},
+    {"name": "auth", "description": "1️⃣ Registro e inicio de sesion"},
+    {"name": "users", "description": "2️⃣ Gestion de perfil de usuario"},
+    {"name": "children", "description": "3️⃣ Gestion de hijos"},
+    {"name": "addresses", "description": "4️⃣ Direcciones de envio"},
+    {"name": "restrictions", "description": "5️⃣ Restricciones alimentarias"},
+    {"name": "foods", "description": "6️⃣ Catalogo de alimentos"},
+    {"name": "lunchboxes", "description": "7️⃣ Loncheras escolares"},
 ]
 
 app = FastAPI(
     title="NutriBox API",
-    description="Plataforma para gestion de loncheras escolares",
-    version="1.0.0",
+    description="Plataforma para gestion de loncheras escolares - FASE 2",
+    version="2.0.0",
     openapi_tags=tags_metadata
 )
 
-# AGREGAR CORS - ESTO ES LO IMPORTANTE
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # En producción cambiar por dominios específicos
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,7 +34,7 @@ app.add_middleware(
 
 @app.get("/", tags=["health"])
 def health():
-    return {"status": "ok", "env": settings.ENV, "app": "NutriBox API"}
+    return {"status": "ok", "env": settings.ENV, "app": "NutriBox API v2.0"}
 
 from app.api.v1.routes import api_router
 app.include_router(api_router)

@@ -2,7 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.deps import get_db
 from app.db.schemas.child import HijoCreate, HijoRead, HijoUpdate
+from app.db.schemas.detail import ChildDetail
 from app.crud import child as crud
+from app.crud import detail as detail_crud
 
 router = APIRouter(prefix="/children", tags=["children"])
 
@@ -17,6 +19,14 @@ def get_child(child_id: int, db: Session = Depends(get_db)):
     if not obj:
         raise HTTPException(status_code=404, detail="Hijo no encontrado")
     return obj
+
+@router.get("/{child_id}/detail", response_model=ChildDetail, summary="Detalle completo del hijo")
+def get_child_detail(child_id: int, db: Session = Depends(get_db)):
+    """Retorna: padre, restricciones, loncheras recientes, estadísticas."""
+    data = detail_crud.get_child_detail(db, child_id)
+    if not data:
+        raise HTTPException(status_code=404, detail="Hijo no encontrado")
+    return data
 
 @router.post("/", response_model=HijoRead, status_code=status.HTTP_201_CREATED, summary="Crear un hijo")
 def create_child(payload: HijoCreate, db: Session = Depends(get_db)):

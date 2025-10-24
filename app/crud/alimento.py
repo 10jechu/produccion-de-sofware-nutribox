@@ -3,10 +3,14 @@ from sqlalchemy import select
 from app.db.models.alimento import Alimento
 from app.db.schemas.food import AlimentoCreate, AlimentoUpdate
 
-def list_(db: Session, only_active: bool = True) -> list[Alimento]:
+def list_(db: Session, only_active: bool | str = True) -> list[Alimento]:
     stmt = select(Alimento)
-    if only_active:
+    if only_active == "all":
+        pass  # Retorna todos
+    elif only_active is True or only_active == "true":
         stmt = stmt.where(Alimento.activo == True)
+    elif only_active is False or only_active == "false":
+        stmt = stmt.where(Alimento.activo == False)
     return db.scalars(stmt).all()
 
 def get_by_id(db: Session, alimento_id: int) -> Alimento | None:
