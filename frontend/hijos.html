@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Hijos - NutriBox</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="sidebar-logo">ÌΩ± NutriBox</div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="hijos.html" class="active">
+                    <i class="fas fa-child"></i> Mis Hijos
+                </a>
+                <a href="crear-lonchera.html">
+                    <i class="fas fa-plus-circle"></i> Crear Lonchera
+                </a>
+                <a href="mis-loncheras.html">
+                    <i class="fas fa-list"></i> Mis Loncheras
+                </a>
+                <a href="configuracion.html">
+                    <i class="fas fa-cog"></i> Configuraci√≥n
+                </a>
+                <a href="#" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesi√≥n
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>Mis Hijos</h1>
+                    <p style="color: var(--text-light);">Gestiona la informaci√≥n de tus hijos</p>
+                </div>
+                <button class="btn btn-primary" onclick="showAddChildModal()">
+                    <i class="fas fa-plus"></i> Agregar Hijo
+                </button>
+            </div>
+
+            <div id="hijosContainer" class="grid grid-3">
+                <!-- Cards de hijos se cargan aqu√≠ -->
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/pages/hijos.js"></script>
+</body>
+</html>

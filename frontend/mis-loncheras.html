@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Loncheras - NutriBox</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="sidebar-logo">��� NutriBox</div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="hijos.html">
+                    <i class="fas fa-child"></i> Mis Hijos
+                </a>
+                <a href="crear-lonchera.html">
+                    <i class="fas fa-plus-circle"></i> Crear Lonchera
+                </a>
+                <a href="mis-loncheras.html" class="active">
+                    <i class="fas fa-list"></i> Mis Loncheras
+                </a>
+                <a href="configuracion.html">
+                    <i class="fas fa-cog"></i> Configuración
+                </a>
+                <a href="#" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="dashboard-header">
+                <h1>Mis Loncheras</h1>
+                <p style="color: var(--text-light);">Historial de todas tus loncheras</p>
+            </div>
+
+            <div class="card">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Hijo</th>
+                                <th>Estado</th>
+                                <th>Items</th>
+                                <th>Calorías</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lunchboxesTableBody">
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: var(--text-light);">
+                                    Cargando...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script>
+        requireAuth();
+        
+        let lunchboxes = [];
+        
+        async function loadLunchboxes() {
+            try {
+                showLoading();
+                lunchboxes = await API.getLunchboxes();
+                renderLunchboxes();
+                closeLoading();
+            } catch (error) {
+                closeLoading();
+                showNotification('Error', 'No se pudieron cargar las loncheras', 'error');
+            }
+        }
+        
+        function renderLunchboxes() {
+            const tbody = document.getElementById('lunchboxesTableBody');
+            
+            if (lunchboxes.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-light);">No hay loncheras registradas</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = lunchboxes.map(lb => `
+                <tr>
+                    <td>${formatDate(lb.fecha)}</td>
+                    <td>Hijo #${lb.hijo_id}</td>
+                    <td>
+                        <span class="badge ${lb.estado === 'Confirmada' ? 'badge-success' : lb.estado === 'Borrador' ? 'badge-warning' : 'badge-danger'}">
+                            ${lb.estado}
+                        </span>
+                    </td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>
+                        <button class="btn btn-outline" style="padding: 6px 12px;" onclick="viewDetail(${lb.id})">
+                            <i class="fas fa-eye"></i> Ver
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        async function viewDetail(id) {
+            try {
+                showLoading();
+                const detail = await API.getLunchboxDetail(id);
+                closeLoading();
+                
+                const itemsList = detail.items.map(item => 
+                    `<li>${item.nombre} - ${item.cantidad}x (${item.kcal} kcal)</li>`
+                ).join('');
+                
+                Swal.fire({
+                    title: 'Detalle de Lonchera',
+                    html: `
+                        <div style="text-align: left;">
+                            <p><strong>Hijo:</strong> ${detail.hijo.nombre}</p>
+                            <p><strong>Fecha:</strong> ${formatDate(detail.fecha)}</p>
+                            <p><strong>Estado:</strong> ${detail.estado}</p>
+                            <h4>Alimentos:</h4>
+                            <ul>${itemsList}</ul>
+                            <h4>Nutrición Total:</h4>
+                            <p>Calorías: ${detail.nutricion_total.calorias} kcal</p>
+                            <p>Proteínas: ${detail.nutricion_total.proteinas} g</p>
+                            <p>Carbohidratos: ${detail.nutricion_total.carbohidratos} g</p>
+                        </div>
+                    `,
+                    width: 600,
+                    confirmButtonColor: '#4CAF50'
+                });
+            } catch (error) {
+                closeLoading();
+                showNotification('Error', 'No se pudo cargar el detalle', 'error');
+            }
+        }
+        
+        loadLunchboxes();
+    </script>
+</body>
+</html>

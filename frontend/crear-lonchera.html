@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crear Lonchera - NutriBox</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="sidebar-logo">��� NutriBox</div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="hijos.html">
+                    <i class="fas fa-child"></i> Mis Hijos
+                </a>
+                <a href="crear-lonchera.html" class="active">
+                    <i class="fas fa-plus-circle"></i> Crear Lonchera
+                </a>
+                <a href="mis-loncheras.html">
+                    <i class="fas fa-list"></i> Mis Loncheras
+                </a>
+                <a href="configuracion.html">
+                    <i class="fas fa-cog"></i> Configuración
+                </a>
+                <a href="#" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="dashboard-header">
+                <h1>Crear Nueva Lonchera</h1>
+                <p style="color: var(--text-light);">Selecciona los alimentos para la lonchera</p>
+            </div>
+
+            <div class="grid grid-2">
+                <div>
+                    <div class="card" style="margin-bottom: 24px;">
+                        <h3 style="margin-bottom: 16px;">Información Básica</h3>
+                        <form id="lunchboxForm">
+                            <div class="form-group">
+                                <label>Hijo</label>
+                                <select id="hijoSelect" class="form-control" required>
+                                    <option value="">Selecciona un hijo</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Fecha</label>
+                                <input type="date" id="fechaInput" class="form-control" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Dirección de Entrega</label>
+                                <select id="direccionSelect" class="form-control">
+                                    <option value="">Selecciona una dirección (opcional)</option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="card">
+                        <h3 style="margin-bottom: 16px;">Catálogo de Alimentos</h3>
+                        <input type="text" id="searchFood" class="form-control" placeholder="Buscar alimento..." style="margin-bottom: 16px;">
+                        <div id="foodsContainer" style="max-height: 400px; overflow-y: auto;">
+                            <!-- Lista de alimentos -->
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="card">
+                        <h3 style="margin-bottom: 16px;">Alimentos Seleccionados</h3>
+                        <div id="selectedFoodsContainer" style="min-height: 200px;">
+                            <p style="text-align: center; color: var(--text-light);">No hay alimentos seleccionados</p>
+                        </div>
+                    </div>
+
+                    <div class="card" style="margin-top: 24px;">
+                        <h3 style="margin-bottom: 16px;">Información Nutricional Total</h3>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Calorías:</span>
+                            <strong id="totalCalorias">0 kcal</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Proteínas:</span>
+                            <strong id="totalProteinas">0 g</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 24px;">
+                            <span>Carbohidratos:</span>
+                            <strong id="totalCarbos">0 g</strong>
+                        </div>
+                        <button class="btn btn-primary" style="width: 100%;" onclick="createLunchbox()">
+                            <i class="fas fa-check"></i> Crear Lonchera
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/pages/loncheras.js"></script>
+</body>
+</html>

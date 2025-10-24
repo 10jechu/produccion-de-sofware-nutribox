@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - NutriBox</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <div class="sidebar-logo">��� NutriBox</div>
+            <nav class="sidebar-nav">
+                <a href="dashboard.html" class="active">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="hijos.html">
+                    <i class="fas fa-child"></i> Mis Hijos
+                </a>
+                <a href="crear-lonchera.html">
+                    <i class="fas fa-plus-circle"></i> Crear Lonchera
+                </a>
+                <a href="mis-loncheras.html">
+                    <i class="fas fa-list"></i> Mis Loncheras
+                </a>
+                <a href="configuracion.html">
+                    <i class="fas fa-cog"></i> Configuración
+                </a>
+                <a href="#" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <div class="dashboard-header">
+                <h1>Bienvenido, <span id="userName">Usuario</span></h1>
+                <p style="color: var(--text-light);">Aquí tienes un resumen de tu actividad</p>
+            </div>
+
+            <div class="stats-grid grid grid-3">
+                <div class="card stat-card">
+                    <div class="stat-icon primary">
+                        <i class="fas fa-child"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalHijos">0</h3>
+                        <p>Hijos Registrados</p>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon secondary">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalLoncheras">0</h3>
+                        <p>Loncheras Activas</p>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="stat-icon accent">
+                        <i class="fas fa-map-marker-alt"></i>
+                    </div>
+                    <div class="stat-info">
+                        <h3 id="totalDirecciones">0</h3>
+                        <p>Direcciones</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-2">
+                <div class="card">
+                    <h3 style="margin-bottom: 16px;">Acciones Rápidas</h3>
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <a href="crear-lonchera.html" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Nueva Lonchera
+                        </a>
+                        <a href="hijos.html" class="btn btn-outline">
+                            <i class="fas fa-child"></i> Agregar Hijo
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 style="margin-bottom: 16px;">Información de Membresía</h3>
+                    <p><strong>Plan:</strong> <span id="planMembresia">-</span></p>
+                    <p><strong>Direcciones disponibles:</strong> <span id="maxDirecciones">-</span></p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/pages/dashboard.js"></script>
+</body>
+</html>
