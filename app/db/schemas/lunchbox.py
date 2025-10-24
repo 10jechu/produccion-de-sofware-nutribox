@@ -9,7 +9,6 @@ class LoncheraCreate(BaseModel):
     direccion_id: int | None = None
 
 class LoncheraUpdate(BaseModel):
-    hijo_id: int | None = None
     fecha: date | None = None
     estado: str | None = None
     direccion_id: int | None = None
@@ -19,7 +18,7 @@ class LoncheraRead(ORMModel):
     hijo_id: int
     fecha: date
     estado: str
-    direccion_id: int | None = None
+    direccion_id: int | None
 
 class LoncheraItemCreate(BaseModel):
     alimento_id: int
@@ -28,16 +27,7 @@ class LoncheraItemCreate(BaseModel):
 class LoncheraItemUpdate(BaseModel):
     cantidad: float
 
-class LoncheraItemRead(BaseModel):
+class LoncheraItemRead(ORMModel):
+    lonchera_id: int
     alimento_id: int
-    nombre: str
     cantidad: float
-
-class DireccionMini(BaseModel):
-    etiqueta: str
-    direccion: str
-    ciudad: str
-
-class LoncheraDetailRead(LoncheraRead):
-    items: list[LoncheraItemRead]
-    direccion: DireccionMini | None = None
