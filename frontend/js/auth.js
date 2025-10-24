@@ -27,7 +27,7 @@ const handleRegister = async (event) => {
         );
         
         setTimeout(() => {
-            window.location.href = '/frontend/login.html';
+            window.location.href = 'login.html';
         }, 2000);
         
     } catch (error) {
@@ -66,7 +66,7 @@ const handleLogin = async (event) => {
         closeLoading();
         
         // Redirigir al dashboard
-        window.location.href = '/frontend/dashboard.html';
+        window.location.href = 'dashboard.html';
         
     } catch (error) {
         closeLoading();

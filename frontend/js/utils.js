@@ -6,14 +6,14 @@ const isAuthenticated = () => {
 // Redirigir a login si no está autenticado
 const requireAuth = () => {
     if (!isAuthenticated()) {
-        window.location.href = '/frontend/login.html';
+        window.location.href = 'login.html';
     }
 };
 
 // Logout
 const logout = () => {
     clearStorage();
-    window.location.href = '/frontend/login.html';
+    window.location.href = 'login.html';
 };
 
 // Mostrar notificación con SweetAlert2
