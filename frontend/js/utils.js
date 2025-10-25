@@ -20,6 +20,18 @@ function logout() {
     window.location.href = 'login.html';
 }
 
+/**
+ * Requiere autenticación - redirige a login si no hay usuario
+ */
+function requireAuth() {
+    const user = getUser();
+    if (!user) {
+        window.location.href = 'login.html';
+        return false;
+    }
+    return true;
+}
+
 // ========================================
 // SISTEMA DE PERMISOS
 // ========================================
@@ -104,60 +116,17 @@ function showUpgradeModal(feature = 'esta función') {
     const user = getUser();
     const currentPlan = user && user.membresia ? user.membresia.tipo : 'Free';
 
-    // Beneficios por plan
-    const benefits = {
-        'Estandar': [
-            '✅ Crear loncheras predeterminadas',
-            '✅ 1 dirección de entrega',
-            '✅ Configurar restricciones alimentarias',
-            '✅ Estadísticas básicas',
-            '✅ Historial de loncheras'
-        ],
-        'Premium': [
-            '✅ Personalización completa de loncheras',
-            '✅ Gestión de alimentos personalizados',
-            '✅ Hasta 3 direcciones de entrega',
-            '✅ Estadísticas avanzadas con gráficos',
-            '✅ Historial completo y restauración',
-            '✅ Soporte prioritario',
-            '✅ Todas las funciones desbloqueadas'
-        ]
-    };
-
-    // Determinar plan sugerido
-    const suggestedPlan = currentPlan === 'Free' ? 'Estandar' : 'Premium';
-
     Swal.fire({
         icon: 'info',
-        title: `${feature} requiere plan ${suggestedPlan}`,
+        title: 'Funcionalidad Premium',
         html: `
-            <div style="text-align: left; padding: 0 20px;">
-                <p style="margin-bottom: 10px;">
-                    <strong>Tu plan actual:</strong>
-                    <span style="color: #FF9800;">${currentPlan}</span>
-                </p>
-                <p style="margin-bottom: 10px;">
-                    <strong>Mejora a ${suggestedPlan} y obtén:</strong>
-                </p>
-                <ul style="list-style: none; padding-left: 0;">
-                    ${benefits[suggestedPlan].map(b => `<li style="margin: 8px 0;">${b}</li>`).join('')}
-                </ul>
-                ${suggestedPlan === 'Premium' ? `
-                    <div style="background: #FFF3E0; padding: 12px; border-radius: 8px; margin-top: 16px;">
-                        <p style="margin: 0; font-size: 14px;">
-                            💡 <strong>Recomendación:</strong> El plan Premium es ideal para
-                            familias que quieren control total sobre la alimentación de sus hijos.
-                        </p>
-                    </div>
-                ` : ''}
-            </div>
+            <p>Tu plan actual <strong>${currentPlan}</strong> no incluye acceso a: <strong>${feature}</strong>.</p>
+            <p>Actualiza tu membresía para desbloquear esta y otras funcionalidades.</p>
         `,
         showCancelButton: true,
-        confirmButtonText: `Ver Plan ${suggestedPlan}`,
-        cancelButtonText: 'Tal vez después',
-        confirmButtonColor: '#4CAF50',
-        cancelButtonColor: '#9E9E9E',
-        width: 600
+        confirmButtonText: 'Ver Planes',
+        cancelButtonText: 'Cerrar',
+        confirmButtonColor: '#4CAF50'
     }).then((result) => {
         if (result.isConfirmed) {
             window.location.href = 'planes.html';
@@ -165,65 +134,28 @@ function showUpgradeModal(feature = 'esta función') {
     });
 }
 
-// ========================================
-// BADGE DE PLAN
-// ========================================
-
 /**
- * Renderiza badge del plan en el navbar/sidebar
+ * Renderiza el badge del plan en el header
  */
 function renderPlanBadge() {
+    const planBadge = document.getElementById('planBadge');
+    if (!planBadge) return;
+
     const user = getUser();
-    if (!user) return;
+    if (!user || !user.membresia) {
+        planBadge.style.display = 'none';
+        return;
+    }
 
-    const plan = user.membresia ? user.membresia.tipo : 'Free';
-
-    const colors = {
-        'Free': {
-            bg: '#9E9E9E',
-            text: '#FFFFFF'
-        },
-        'Estandar': {
-            bg: '#2196F3',
-            text: '#FFFFFF'
-        },
-        'Premium': {
-            bg: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
-            text: '#000000'
-        }
+    const planColors = {
+        'Free': '#9E9E9E',
+        'Estandar': '#2196F3',
+        'Premium': '#FFD700'
     };
 
-    const style = colors[plan];
-
-    const badge = `
-        <div class="plan-badge" style="
-            background: ${style.bg};
-            color: ${style.text};
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 13px;
-            font-weight: 600;
-            margin: 12px 0;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        ">
-            ${plan === 'Premium' ? '⭐ ' : ''}${plan}
-            ${plan !== 'Premium' ? '<span style="font-size: 10px; opacity: 0.8;"> ▸ <a href="planes.html" style="color: inherit; text-decoration: underline;">Mejorar</a></span>' : ''}
-        </div>
-    `;
-
-    // Buscar dónde insertar el badge
-    const sidebar = document.querySelector('.sidebar-logo') ||
-                    document.querySelector('.user-info') ||
-                    document.querySelector('nav');
-
-    if (sidebar) {
-        // Remover badge anterior si existe
-        const oldBadge = document.querySelector('.plan-badge');
-        if (oldBadge) oldBadge.remove();
-
-        sidebar.insertAdjacentHTML('afterend', badge);
-    }
+    planBadge.textContent = user.membresia.tipo;
+    planBadge.style.backgroundColor = planColors[user.membresia.tipo] || '#9E9E9E';
+    planBadge.style.display = 'inline-block';
 }
 
 // ========================================
@@ -231,28 +163,38 @@ function renderPlanBadge() {
 // ========================================
 
 /**
- * Muestra notificación toast
- * @param {string} title - Título
- * @param {string} message - Mensaje
- * @param {string} type - 'success', 'error', 'warning', 'info'
+ * Muestra una notificación usando SweetAlert2
+ * @param {string} title - Título de la notificación
+ * @param {string} text - Texto de la notificación
+ * @param {string} icon - Tipo de icono: 'success', 'error', 'warning', 'info'
  */
-function showNotification(title, message, type = 'info') {
-    const icons = {
-        'success': 'success',
-        'error': 'error',
-        'warning': 'warning',
-        'info': 'info'
-    };
-
+function showNotification(title, text, icon = 'info') {
     Swal.fire({
-        icon: icons[type],
+        icon: icon,
         title: title,
-        text: message,
-        toast: true,
-        position: 'top-end',
-        showConfirmButton: false,
+        text: text,
+        confirmButtonColor: '#4CAF50',
         timer: 3000,
         timerProgressBar: true
+    });
+}
+
+/**
+ * Muestra un diálogo de confirmación
+ * @param {string} title - Título del diálogo
+ * @param {string} text - Texto del diálogo
+ * @returns {Promise} Promesa con el resultado
+ */
+function confirmAction(title, text) {
+    return Swal.fire({
+        icon: 'warning',
+        title: title,
+        text: text,
+        showCancelButton: true,
+        confirmButtonText: 'Sí, continuar',
+        cancelButtonText: 'Cancelar',
+        confirmButtonColor: '#4CAF50',
+        cancelButtonColor: '#F44336'
     });
 }
 
@@ -345,16 +287,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Aplicar permisos a botones
     applyPermissions();
 
-    // Verificar sesión
-    const user = getUser();
-    if (!user && !window.location.pathname.includes('login.html')) {
-        window.location.href = 'login.html';
+    // Verificar sesión solo en páginas que no son login/register/index
+    const currentPage = window.location.pathname;
+    const publicPages = ['login.html', 'register.html', 'index.html', '/'];
+    const isPublicPage = publicPages.some(page => currentPage.includes(page) || currentPage === '/');
+
+    if (!isPublicPage) {
+        const user = getUser();
+        if (!user) {
+            window.location.href = 'login.html';
+        }
     }
 });
-
-// ========================================
-// EXPORTAR FUNCIONES
-// ========================================
-
-// Si usas módulos ES6, puedes exportar así:
-// export { canUserDo, showUpgradeModal, renderPlanBadge, ... };
