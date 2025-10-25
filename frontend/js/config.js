@@ -1,4 +1,5 @@
-// Configuración global
+// js/config.js
+// Configuración global (Todas las funciones de gestión de sesión están aquí)
 const CONFIG = {
     API_BASE_URL: 'http://127.0.0.1:8000/api/v1',
     APP_NAME: 'NutriBox',
@@ -31,7 +32,12 @@ const getUser = () => {
     return user ? JSON.parse(user) : null;
 };
 
-// Limpiar todo
+// Función para remover solo el usuario
+const removeUser = () => {
+    localStorage.removeItem('nutribox_user');
+};
+
+// Función de limpieza total
 const clearStorage = () => {
     localStorage.clear();
 };
