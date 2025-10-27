@@ -20,3 +20,5 @@ venv/
 # Build
 dist/
 build/
+*.db
+nutribox.db

@@ -1,0 +1,1 @@
+{"scripts": {"watch": "node-sass frontend/scss/main.scss frontend/css/styles.css -w"}}

@@ -1,5 +1,10 @@
 // Función genérica de fetch
 const apiFetch = async (endpoint, options = {}) => {
+    // ASEGURA QUE EL ENDPOINT SIEMPRE TENGA UN SLASH FINAL para evitar redirecciones 307
+    if (endpoint.length > 1 && !endpoint.endsWith('/')) {
+        endpoint = endpoint + '/';
+    }
+
     const token = getToken();
     const headers = {
         'Content-Type': 'application/json',
@@ -23,6 +28,10 @@ const apiFetch = async (endpoint, options = {}) => {
             throw new Error(error.detail || 'Error en la petición');
         }
         
+        if (response.status === 204) {
+            return {}; 
+        }
+
         return await response.json();
     } catch (error) {
         console.error('API Error:', error);
