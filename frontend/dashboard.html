@@ -11,7 +11,7 @@
 <body>
     <div class="dashboard">
         <aside class="sidebar">
-            <div class="sidebar-logo">��� NutriBox</div>
+            <div class="sidebar-logo">🍃 NutriBox</div>
             <nav class="sidebar-nav">
                 <a href="dashboard.html" class="active">
                     <i class="fas fa-home"></i> Dashboard
@@ -36,8 +36,8 @@
 
         <main class="main-content">
             <div class="dashboard-header">
-                <h1>Bienvenido, <span id="userName">Usuario</span></h1>
-                <p style="color: var(--text-light);">Aquí tienes un resumen de tu actividad</p>
+                <h1>Bienvenido, <span id="userName">Usuario</span> 👋</h1>
+                <p style="color: var(--text-light);">Aquí tienes un resumen de tu cuenta</p>
             </div>
 
             <div class="stats-grid grid grid-3">
@@ -50,15 +50,17 @@
                         <p>Hijos Registrados</p>
                     </div>
                 </div>
+
                 <div class="card stat-card">
                     <div class="stat-icon secondary">
                         <i class="fas fa-box"></i>
                     </div>
                     <div class="stat-info">
                         <h3 id="totalLoncheras">0</h3>
-                        <p>Loncheras Activas</p>
+                        <p>Loncheras este mes</p>
                     </div>
                 </div>
+
                 <div class="card stat-card">
                     <div class="stat-icon accent">
                         <i class="fas fa-map-marker-alt"></i>
@@ -70,23 +72,31 @@
                 </div>
             </div>
 
-            <div class="grid grid-2">
-                <div class="card">
-                    <h3 style="margin-bottom: 16px;">Acciones Rápidas</h3>
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        <a href="crear-lonchera.html" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Nueva Lonchera
-                        </a>
-                        <a href="hijos.html" class="btn btn-outline">
-                            <i class="fas fa-child"></i> Agregar Hijo
-                        </a>
+            <div class="card">
+                <h3 style="margin-bottom: 16px;">Tu Plan de Membresía</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <p style="font-size: 24px; font-weight: 600; color: var(--primary); margin-bottom: 4px;" id="planMembresia">Free</p>
+                        <p style="color: var(--text-light);">Máximo <span id="maxDirecciones">1</span> dirección(es) de entrega</p>
                     </div>
+                    <button class="btn btn-primary">
+                        <i class="fas fa-crown"></i> Mejorar Plan
+                    </button>
                 </div>
+            </div>
 
-                <div class="card">
-                    <h3 style="margin-bottom: 16px;">Información de Membresía</h3>
-                    <p><strong>Plan:</strong> <span id="planMembresia">-</span></p>
-                    <p><strong>Direcciones disponibles:</strong> <span id="maxDirecciones">-</span></p>
+            <div class="card">
+                <h3 style="margin-bottom: 16px;">Acciones Rápidas</h3>
+                <div class="grid grid-3">
+                    <a href="hijos.html" class="btn btn-outline" style="text-align: center;">
+                        <i class="fas fa-child"></i> Gestionar Hijos
+                    </a>
+                    <a href="crear-lonchera.html" class="btn btn-primary" style="text-align: center;">
+                        <i class="fas fa-plus-circle"></i> Nueva Lonchera
+                    </a>
+                    <a href="configuracion.html" class="btn btn-outline" style="text-align: center;">
+                        <i class="fas fa-cog"></i> Configuración
+                    </a>
                 </div>
             </div>
         </main>
