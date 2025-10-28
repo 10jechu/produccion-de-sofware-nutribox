@@ -1,12 +1,22 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from app.core.deps import get_db
+from app.core.deps import get_db, get_current_user
 from app.db.schemas.user import UserRead, UserUpdate
 from app.db.schemas.detail import UserDetail
 from app.crud import user as crud
 from app.crud import detail as detail_crud
+from app.db.models.core_models import Usuario
 
 router = APIRouter(prefix="/users", tags=["users"])
+
+@router.get("/me", response_model=UserRead, summary="Obtener datos del usuario actual")
+def get_current_user_data(
+    current_user: Usuario = Depends(get_current_user)
+):
+    """
+    Obtiene los datos del usuario autenticado (a través del token).
+    """
+    return current_user
 
 @router.get("/", response_model=list[UserRead], summary="Listar todos los usuarios")
 def list_users(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):

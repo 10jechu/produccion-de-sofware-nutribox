@@ -155,6 +155,7 @@ class APIClient {
         }
     }
 
+// ... (El resto de los métodos como login y register)
 
     /**
      * Logout
@@ -165,8 +166,21 @@ class APIClient {
         window.location.href = 'login.html';
     }
 
-    // ... (El resto de la clase sigue igual)
-}
+    // --- CORRECCIÓN AQUÍ ---
+    // ESTA FUNCIÓN VA ANTES DEL CIERRE DE LA CLASE
+    async getUserDetail(userId) {
+        try {
+            // Llama al endpoint del backend que SÍ existe
+            const response = await this.get(`/users/${userId}/detail`);
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching user detail:', error);
+            throw error;
+        }
+    }
+    // --- FIN DE LA CORRECCIÓN ---
+
+} // <-- ESTA es la llave que cierra la 'class APIClient'
 
 // 🚨 CORRECCIÓN CRÍTICA: Inicializa la instancia sin pasar un argumento,
 // forzando que use el valor predeterminado de CONFIG.js.
