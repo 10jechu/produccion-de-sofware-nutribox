@@ -11,7 +11,7 @@
 <body>
     <div class="dashboard">
         <aside class="sidebar">
-            <div class="sidebar-logo">��� NutriBox</div>
+            <div class="sidebar-logo">🍃 NutriBox</div>
             <nav class="sidebar-nav">
                 <a href="dashboard.html">
                     <i class="fas fa-home"></i> Dashboard
@@ -37,52 +37,40 @@
         <main class="main-content">
             <div class="dashboard-header">
                 <h1>Crear Nueva Lonchera</h1>
-                <p style="color: var(--text-light);">Selecciona los alimentos para la lonchera</p>
+                <p style="color: var(--text-light);">Personaliza la lonchera para tu hijo</p>
             </div>
 
-            <div class="grid grid-2">
-                <div>
-                    <div class="card" style="margin-bottom: 24px;">
-                        <h3 style="margin-bottom: 16px;">Información Básica</h3>
-                        <form id="lunchboxForm">
-                            <div class="form-group">
-                                <label>Hijo</label>
-                                <select id="hijoSelect" class="form-control" required>
-                                    <option value="">Selecciona un hijo</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Fecha</label>
-                                <input type="date" id="fechaInput" class="form-control" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Dirección de Entrega</label>
-                                <select id="direccionSelect" class="form-control">
-                                    <option value="">Selecciona una dirección (opcional)</option>
-                                </select>
-                            </div>
-                        </form>
+            <div class="grid grid-2" style="align-items: start;">
+                <!-- Formulario -->
+                <div class="card">
+                    <h3 style="margin-bottom: 24px;">Información Básica</h3>
+
+                    <div class="form-group">
+                        <label for="hijoSelect">Hijo</label>
+                        <select id="hijoSelect" class="form-control">
+                            <option value="">Cargando...</option>
+                        </select>
                     </div>
 
-                    <div class="card">
-                        <h3 style="margin-bottom: 16px;">Catálogo de Alimentos</h3>
-                        <input type="text" id="searchFood" class="form-control" placeholder="Buscar alimento..." style="margin-bottom: 16px;">
-                        <div id="foodsContainer" style="max-height: 400px; overflow-y: auto;">
-                            <!-- Lista de alimentos -->
-                        </div>
-                    </div>
-                </div>
-
-                <div>
-                    <div class="card">
-                        <h3 style="margin-bottom: 16px;">Alimentos Seleccionados</h3>
-                        <div id="selectedFoodsContainer" style="min-height: 200px;">
-                            <p style="text-align: center; color: var(--text-light);">No hay alimentos seleccionados</p>
-                        </div>
+                    <div class="form-group">
+                        <label for="fechaInput">Fecha de Entrega</label>
+                        <input type="date" id="fechaInput" class="form-control">
                     </div>
 
-                    <div class="card" style="margin-top: 24px;">
-                        <h3 style="margin-bottom: 16px;">Información Nutricional Total</h3>
+                    <div class="form-group">
+                        <label for="direccionSelect">Dirección de Entrega</label>
+                        <select id="direccionSelect" class="form-control">
+                            <option value="">Cargando...</option>
+                        </select>
+                    </div>
+
+                    <h3 style="margin: 24px 0 16px;">Alimentos Seleccionados</h3>
+                    <div id="selectedFoodsContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px;">
+                        <p style="text-align: center; color: var(--text-light); padding: 20px;">No hay alimentos seleccionados</p>
+                    </div>
+
+                    <div style="margin-top: 24px; padding: 16px; background: var(--bg-light); border-radius: 8px;">
+                        <h4 style="margin-bottom: 12px;">Información Nutricional Total</h4>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
                             <span>Calorías:</span>
                             <strong id="totalCalorias">0 kcal</strong>
@@ -91,13 +79,27 @@
                             <span>Proteínas:</span>
                             <strong id="totalProteinas">0 g</strong>
                         </div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 24px;">
+                        <div style="display: flex; justify-content: space-between;">
                             <span>Carbohidratos:</span>
                             <strong id="totalCarbos">0 g</strong>
                         </div>
-                        <button class="btn btn-primary" style="width: 100%;" onclick="createLunchbox()">
-                            <i class="fas fa-check"></i> Crear Lonchera
-                        </button>
+                    </div>
+
+                    <button class="btn btn-primary" style="width: 100%; margin-top: 24px;" onclick="createLunchbox()">
+                        <i class="fas fa-check"></i> Crear Lonchera
+                    </button>
+                </div>
+
+                <!-- Catálogo de alimentos -->
+                <div class="card">
+                    <h3 style="margin-bottom: 16px;">Catálogo de Alimentos</h3>
+
+                    <div class="form-group">
+                        <input type="text" id="searchFood" class="form-control" placeholder="Buscar alimentos...">
+                    </div>
+
+                    <div id="foodsContainer" style="max-height: 600px; overflow-y: auto;">
+                        <p style="text-align: center; color: var(--text-light); padding: 20px;">Cargando alimentos...</p>
                     </div>
                 </div>
             </div>
