@@ -1,10 +1,19 @@
 // src/services/auth.service.js
-import apiService from './api.service'; // Importa el servicio API
+import apiService from './api.service';
+import { getUserDetail } from '@/utils/user'; 
 
 const authService = {
+  // FunciÛn auxiliar CORREGIDA: Usa el nuevo endpoint por email y concatenaciÛn
+  async fetchAndSaveUserDetail(email) {
+      // CORRECCI”N FINAL: ConcatenaciÛn simple para evitar corrupciÛn de caracteres
+      const detailedUser = await apiService.get('/users/by-email/' + email + '/detail');
+
+      this.saveUserDetail(detailedUser);
+      return detailedUser;
+  },
+
   async login(email, password) {
-    const endpoint = '/auth/login'; // Endpoint relativo
-    // FastAPI espera datos de formulario para OAuth2PasswordRequestForm
+    const endpoint = '/auth/login';
     const formData = new URLSearchParams();
     formData.append('username', email);
     formData.append('password', password);
@@ -13,29 +22,28 @@ const authService = {
       const response = await apiService.postLogin(endpoint, formData);
       if (response.access_token) {
         this.saveToken(response.access_token);
-        // Podr√≠as obtener y guardar datos del usuario aqu√≠ si es necesario
-        // await this.fetchAndSaveUser(email); // Ejemplo
+        await this.fetchAndSaveUserDetail(email);
       }
-      return response; // Devuelve la respuesta completa (incluye token)
+      return response; 
     } catch (error) {
       console.error('Error en login:', error);
-      this.removeToken(); // Limpia token en caso de error
-      throw error; // Re-lanza el error para que el componente lo maneje
+      this.removeToken(); 
+      this.removeUserDetail(); 
+      throw error;
     }
   },
 
   async register(userData) {
     const endpoint = '/auth/register';
     try {
-        // Asume que la API espera un JSON para el registro
         const response = await apiService.post(endpoint, {
             nombre: userData.nombre,
             email: userData.email,
             password: userData.password,
             membresia: userData.membresia,
-            rol: 'Usuario' // Rol fijo seg√∫n tu backend
+            rol: 'Usuario'
         });
-        return response; // Devuelve la respuesta del backend (ej. {id, email})
+        return response;
     } catch (error) {
         console.error('Error en registro:', error);
         throw error;
@@ -46,42 +54,30 @@ const authService = {
     localStorage.setItem('nutribox_token', token);
   },
 
-  getToken() {
-    return localStorage.getItem('nutribox_token');
-  },
-
   removeToken() {
     localStorage.removeItem('nutribox_token');
-    // Limpiar tambi√©n datos de usuario si los guardas
-    // localStorage.removeItem('nutribox_user');
+  },
+  
+  saveUserDetail(user) {
+      localStorage.setItem('nutribox_user', JSON.stringify(user));
+  },
+  
+  removeUserDetail() {
+      localStorage.removeItem('nutribox_user');
   },
 
   isAuthenticated() {
-    return !!this.getToken();
+    return !!this.getToken() && !!getUserDetail();
   },
 
   logout() {
     this.removeToken();
-    // La redirecci√≥n se manejar√° en el componente o en el router guard
+    this.removeUserDetail();
   },
 
-  // --- Funciones para guardar/obtener usuario (ejemplo) ---
-  /*
-  async fetchAndSaveUser(email) {
-      // Necesitar√≠as un endpoint en tu backend para obtener datos del usuario por email o ID
-      // Ejemplo: const user = await apiService.get('/users/me'); // O buscar por email
-      // if (user) {
-      //   this.saveUser(user);
-      // }
-  },
-  saveUser(user) {
-      localStorage.setItem('nutribox_user', JSON.stringify(user));
-  },
-  getUser() {
-      const user = localStorage.getItem('nutribox_user');
-      return user ? JSON.parse(user) : null;
+  getToken() {
+    return localStorage.getItem('nutribox_token');
   }
-  */
 };
 
 export default authService;

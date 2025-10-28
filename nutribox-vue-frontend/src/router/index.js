@@ -1,73 +1,64 @@
 import { createRouter, createWebHistory } from 'vue-router'
-// Importaremos las vistas aquí cuando las creemos
-import HomeView from '../views/HomeView.vue' // Vista de ejemplo inicial
-import LoginView from '../views/LoginView.vue' // Crearemos esta vista
-import RegisterView from '../views/RegisterView.vue' // Crearemos esta vista
-// Importaremos las vistas protegidas aquí
+import { hasRequiredMembership, isAdmin, getUserDetail } from '@/utils/user';
+import LoginView from '../views/LoginView.vue'
+import RegisterView from '../views/RegisterView.vue'
 import DashboardView from '../views/DashboardView.vue'
-// ... importar las demás vistas (HijosView, AlimentosView, etc.)
+import HijosView from '../views/HijosView.vue'
+import LoncherasView from '../views/LoncherasView.vue'
+import CrearLoncheraView from '../views/CrearLoncheraView.vue'
+import DireccionesView from '../views/DireccionesView.vue'
+import RestriccionesView from '../views/RestriccionesView.vue'
+import AlimentosView from '../views/AlimentosView.vue'
+import PerfilView from '../views/PerfilView.vue'
+import EstadisticasView from '../views/EstadisticasView.vue'
+import MenusView from '../views/MenusView.vue'
+import AdminView from '../views/AdminView.vue' 
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
-    // Rutas Públicas
-    {
-      path: '/login',
-      name: 'login',
-      component: LoginView
-    },
-    {
-      path: '/register',
-      name: 'register',
-      component: RegisterView
-    },
-    // Ruta de ejemplo inicial (la eliminaremos o cambiaremos luego)
-    {
-      path: '/home-example', // Cambiado para evitar conflicto con la raíz
-      name: 'home-example',
-      component: HomeView
-    },
-
-    // --- Rutas Protegidas (requieren login) ---
-    // Usaremos 'meta: { requiresAuth: true }' para marcarlas
-    {
-      path: '/dashboard',
-      name: 'dashboard',
-      component: DashboardView,
-      meta: { requiresAuth: true }
-    },
-    // --- Añadiremos las demás rutas protegidas aquí ---
-    // { path: '/hijos', name: 'hijos', component: HijosView, meta: { requiresAuth: true } },
-    // ... (crear-lonchera, mis-loncheras, direcciones, etc.)
-    // { path: '/perfil', name: 'perfil', component: PerfilView, meta: { requiresAuth: true } },
+    { path: '/login', name: 'login', component: LoginView },
+    { path: '/register', name: 'register', component: RegisterView },
+    
+    { path: '/dashboard', name: 'dashboard', component: DashboardView, meta: { requiresAuth: true } },
+    { path: '/perfil', name: 'perfil', component: PerfilView, meta: { requiresAuth: true } },
+    
+    { path: '/hijos', name: 'hijos', component: HijosView, meta: { requiresAuth: true } },
+    { path: '/direcciones', name: 'direcciones', component: DireccionesView, meta: { requiresAuth: true } },
+    
+    { path: '/crear-lonchera', name: 'crear-lonchera', component: CrearLoncheraView, meta: { requiresAuth: true, requiredMembership: 'Estandar' } },
+    { path: '/mis-loncheras', name: 'mis-loncheras', component: LoncherasView, meta: { requiresAuth: true } },
+    { path: '/menus', name: 'menus', component: MenusView, meta: { requiresAuth: true } },
+    
+    { path: '/restricciones', name: 'restricciones', component: RestriccionesView, meta: { requiresAuth: true, requiredMembership: 'Premium' } },
+    { path: '/estadisticas', name: 'estadisticas', component: EstadisticasView, meta: { requiresAuth: true, requiredMembership: 'Estandar' } },
+    
+    { path: '/alimentos', name: 'alimentos', component: AlimentosView, meta: { requiresAuth: true } },
+    
+    { path: '/admin/foods', name: 'admin-foods', component: AdminView, meta: { requiresAuth: true, requiresAdmin: true } },
 
 
-    // --- Redirecciones y Rutas por Defecto ---
-    {
-      path: '/', // La raíz ahora redirige a login
-      redirect: '/login'
-    },
-    // Ruta Catch-all (404 o redirigir a dashboard)
-    {
-      path: '/:pathMatch(.*)*',
-      redirect: '/dashboard' // O a un componente NotFoundView
-    }
+    { path: '/', redirect: '/dashboard' }, 
+    { path: '/:pathMatch(.*)*', redirect: '/dashboard' } 
   ]
 })
 
-// --- Lógica de Guardia de Navegación (para proteger rutas) ---
-// Esto se ejecutará antes de cada cambio de ruta
+// L�gica de Guardia de Navegaci�n (Autorizaci�n)
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = !!localStorage.getItem('nutribox_token'); // Verifica si hay token
+  const isAuthenticated = !!localStorage.getItem('nutribox_token');
+  const user = getUserDetail(); 
 
   if (to.meta.requiresAuth && !isAuthenticated) {
-    // Si la ruta requiere autenticación y no hay token, redirige a login
     next({ name: 'login' });
   } else if ((to.name === 'login' || to.name === 'register') && isAuthenticated) {
-    // Si intenta ir a login/register estando autenticado, redirige a dashboard
+    next({ name: 'dashboard' });
+  } else if (to.meta.requiresAdmin && (!user || !user.rol || user.rol.nombre !== 'Admin')) {
+     console.error('Acceso denegado. Rol Admin requerido.');
+     next({ name: 'dashboard' }); 
+  } else if (to.meta.requiredMembership && !hasRequiredMembership(to.meta.requiredMembership)) {
+    console.error('Acceso denegado. Plan ' + to.meta.requiredMembership + ' requerido.');
     next({ name: 'dashboard' });
   } else {
-    // En cualquier otro caso, permite la navegación
     next();
   }
 });
