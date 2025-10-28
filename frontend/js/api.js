@@ -1,7 +1,7 @@
 // Función genérica de fetch
 const apiFetch = async (endpoint, options = {}) => {
     // ASEGURA QUE EL ENDPOINT SIEMPRE TENGA UN SLASH FINAL para evitar redirecciones 307
-    if (endpoint.length > 1 && !endpoint.endsWith('/')) {
+    if (endpoint.length > 1 && !endpoint.endsWith('/') && !endpoint.includes('?')) {
         endpoint = endpoint + '/';
     }
 
