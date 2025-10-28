@@ -66,7 +66,7 @@ const handleLogin = async (event) => {
         closeLoading();
         
         // Redirigir al dashboard (Usamos ruta absoluta para evitar problemas de Live Server)
-        window.location.href = '/dashboard.html';
+        window.location.href = 'dashboard.html';
         
     } catch (error) {
         closeLoading();
