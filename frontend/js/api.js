@@ -156,6 +156,19 @@ const API = {
         method: 'PATCH',
         body: JSON.stringify(data)
     }),
+    // ----- FUNCIONES QUE FALTABAN -----
+    addItemToLunchbox: (lunchboxId, data) => apiFetch(`/lunchboxes/${lunchboxId}/items`, {
+        method: 'POST',
+        body: JSON.stringify(data)
+    }),
+    updateLunchboxItem: (lunchboxId, alimentoId, data) => apiFetch(`/lunchboxes/${lunchboxId}/items/${alimentoId}`, {
+        method: 'PATCH',
+        body: JSON.stringify(data)
+    }),
+    removeItemFromLunchbox: (lunchboxId, alimentoId) => apiFetch(`/lunchboxes/${lunchboxId}/items/${alimentoId}`, {
+        method: 'DELETE'
+    }),
+    // ------------------------------------
 
     // Restricciones
     getRestrictions: (hijoId) => apiFetch(`/restrictions?hijo_id=${hijoId}`),

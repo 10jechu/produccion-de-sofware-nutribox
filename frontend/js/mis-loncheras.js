@@ -57,12 +57,12 @@ async function loadLunchboxes() {
 
 function renderLunchboxes() {
     const tbody = document.getElementById("lunchboxesTableBody");
-    
+
     if (lunchboxes.length === 0) {
         tbody.innerHTML = "<tr><td colspan=\"7\" class=\"text-center text-muted\">No hay loncheras registradas</td></tr>";
         return;
     }
-    
+
     tbody.innerHTML = lunchboxes.map(lb => `
         <tr>
             <td>${formatDate(lb.fecha)}</td>
@@ -76,9 +76,15 @@ function renderLunchboxes() {
             <td>${lb.total_calorias} kcal</td>
             <td>${formatCurrency(lb.total_costo)}</td>
             <td>
-                <button class="btn btn-sm btn-outline-primary" onclick="viewDetail(${lb.id})">
-                    <i class="fas fa-eye me-1"></i> Ver Detalle
+                <button class="btn btn-sm btn-outline-primary me-1" onclick="viewDetail(${lb.id})">
+                    <i class="fas fa-eye"></i>
+                    <span class="d-none d-md-inline"> Ver Detalle</span>
                 </button>
+
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteLunchbox(${lb.id})">
+                    <i class="fas fa-trash"></i>
+                </button>
+
             </td>
         </tr>
     `).join("");
