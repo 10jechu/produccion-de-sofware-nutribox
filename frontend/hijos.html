@@ -11,7 +11,7 @@
 <body>
     <div class="dashboard">
         <aside class="sidebar">
-            <div class="sidebar-logo">ÌΩ± NutriBox</div>
+            <div class="sidebar-logo">üçÉ NutriBox</div>
             <nav class="sidebar-nav">
                 <a href="dashboard.html">
                     <i class="fas fa-home"></i> Dashboard
@@ -35,18 +35,19 @@
         </aside>
 
         <main class="main-content">
-            <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h1>Mis Hijos</h1>
-                    <p style="color: var(--text-light);">Gestiona la informaci√≥n de tus hijos</p>
-                </div>
+            <div class="dashboard-header">
+                <h1>Mis Hijos</h1>
+                <p style="color: var(--text-light);">Gestiona la informaci√≥n de tus hijos</p>
+            </div>
+
+            <div class="card" style="margin-bottom: 24px;">
                 <button class="btn btn-primary" onclick="showAddChildModal()">
                     <i class="fas fa-plus"></i> Agregar Hijo
                 </button>
             </div>
 
-            <div id="hijosContainer" class="grid grid-3">
-                <!-- Cards de hijos se cargan aqu√≠ -->
+            <div id="hijosContainer" class="grid grid-2">
+                <!-- Los hijos se cargan aqu√≠ -->
             </div>
         </main>
     </div>
