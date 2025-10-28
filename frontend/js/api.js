@@ -126,12 +126,20 @@ const API = {
     }),
 
     // Alimentos
-    createFood: (data) => apiFetch('/foods', { // <--- FUNCIÓN NUEVA
+    createFood: (data) => apiFetch('/foods', {
         method: 'POST',
         body: JSON.stringify(data)
     }),
-    getFoods: (onlyActive = 'true') => apiFetch(`/foods?only_active=${onlyActive}`), // Ya tiene '?'
+    getFoods: (onlyActive = 'true') => apiFetch(`/foods?only_active=${onlyActive}`),
     getFood: (id) => apiFetch(`/foods/${id}`),
+    // ===== FUNCIONES NUEVAS AQUÍ =====
+    updateFood: (id, data) => apiFetch(`/foods/${id}`, { // PATCH para actualizar
+        method: 'PATCH',
+        body: JSON.stringify(data)
+    }),
+    deleteFood: (id) => apiFetch(`/foods/${id}`, { // DELETE (el backend hace soft delete)
+        method: 'DELETE'
+    }),
 
     // Loncheras
     getLunchboxes: (hijoId = null) => {
