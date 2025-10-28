@@ -4,89 +4,102 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - NutriBox</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="dashboard">
-        <aside class="sidebar">
-            <div class="sidebar-logo">��� NutriBox</div>
-            <nav class="sidebar-nav">
-                <a href="dashboard.html" class="active">
-                    <i class="fas fa-home"></i> Dashboard
-                </a>
-                <a href="hijos.html">
-                    <i class="fas fa-child"></i> Mis Hijos
-                </a>
-                <a href="crear-lonchera.html">
-                    <i class="fas fa-plus-circle"></i> Crear Lonchera
-                </a>
-                <a href="mis-loncheras.html">
-                    <i class="fas fa-list"></i> Mis Loncheras
-                </a>
-                <a href="configuracion.html">
-                    <i class="fas fa-cog"></i> Configuración
-                </a>
-                <a href="#" onclick="logout()">
-                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
-                </a>
+    <div class="d-flex">
+        <aside class="sidebar bg-white shadow-sm p-4 d-flex flex-column" style="width: 260px;">
+            <div class="sidebar-logo mb-4 fs-4 fw-bold text-primary-nb">🍃 NutriBox</div>
+            <nav class="nav nav-pills flex-column sidebar-nav">
+                <a class="nav-link text-dark active" href="dashboard.html"><i class="fas fa-home fa-fw me-2"></i> Dashboard</a>
+                <a class="nav-link text-dark" href="hijos.html"><i class="fas fa-child fa-fw me-2"></i> Mis Hijos</a>
+                <a class="nav-link text-dark" href="crear-lonchera.html"><i class="fas fa-plus-circle fa-fw me-2"></i> Crear Lonchera</a>
+                <a class="nav-link text-dark" href="mis-loncheras.html"><i class="fas fa-list fa-fw me-2"></i> Mis Loncheras</a>
+                <a class="nav-link text-dark" href="direcciones.html"><i class="fas fa-map-marker-alt fa-fw me-2"></i> Direcciones</a>
+                <a class="nav-link text-dark" href="restricciones.html"><i class="fas fa-ban fa-fw me-2"></i> Restricciones</a>
+                <a class="nav-link text-dark" href="alimentos.html"><i class="fas fa-utensils fa-fw me-2"></i> Alimentos</a>
+                <a class="nav-link text-dark" href="perfil.html"><i class="fas fa-user-circle fa-fw me-2"></i> Mi Perfil</a>
+                <a class="nav-link text-dark mt-auto" href="#" onclick="logout()"><i class="fas fa-sign-out-alt fa-fw me-2"></i> Cerrar Sesión</a>
             </nav>
         </aside>
 
-        <main class="main-content">
-            <div class="dashboard-header">
-                <h1>Bienvenido, <span id="userName">Usuario</span></h1>
-                <p style="color: var(--text-light);">Aquí tienes un resumen de tu actividad</p>
+        <main class="flex-grow-1 p-4 bg-light">
+            <div class="dashboard-header mb-4">
+                <h1 class="h3">Bienvenido, <span id="userName" class="text-primary-nb">Usuario</span></h1>
+                <p class="text-muted">Aquí tienes un resumen de tu actividad</p>
             </div>
 
-            <div class="stats-grid grid grid-3">
-                <div class="card stat-card">
-                    <div class="stat-icon primary">
-                        <i class="fas fa-child"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3 id="totalHijos">0</h3>
-                        <p>Hijos Registrados</p>
-                    </div>
-                </div>
-                <div class="card stat-card">
-                    <div class="stat-icon secondary">
-                        <i class="fas fa-box"></i>
-                    </div>
-                    <div class="stat-info">
-                        <h3 id="totalLoncheras">0</h3>
-                        <p>Loncheras Activas</p>
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="card p-3 card-shadow">
+                        <div class="d-flex align-items-center">
+                            <div class="stat-icon bg-primary-nb rounded-3 p-3 text-white fs-4 me-3">
+                                <i class="fas fa-child"></i>
+                            </div>
+                            <div>
+                                <h3 id="totalHijos" class="h2 fw-bold mb-0">0</h3>
+                                <p class="text-muted mb-0">Hijos Registrados</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="card stat-card">
-                    <div class="stat-icon accent">
-                        <i class="fas fa-map-marker-alt"></i>
+                <div class="col-md-4">
+                    <div class="card p-3 card-shadow">
+                        <div class="d-flex align-items-center">
+                            <div class="stat-icon bg-warning rounded-3 p-3 text-white fs-4 me-3">
+                                <i class="fas fa-box"></i>
+                            </div>
+                            <div>
+                                <h3 id="totalLoncheras" class="h2 fw-bold mb-0">0</h3>
+                                <p class="text-muted mb-0">Loncheras (este mes)</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="stat-info">
-                        <h3 id="totalDirecciones">0</h3>
-                        <p>Direcciones</p>
+                </div>
+                <div class="col-md-4">
+                    <div class="card p-3 card-shadow">
+                        <div class="d-flex align-items-center">
+                            <div class="stat-icon bg-info rounded-3 p-3 text-white fs-4 me-3">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                            <div>
+                                <h3 id="totalDirecciones" class="h2 fw-bold mb-0">0</h3>
+                                <p class="text-muted mb-0">Direcciones</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-2">
-                <div class="card">
-                    <h3 style="margin-bottom: 16px;">Acciones Rápidas</h3>
-                    <div style="display: flex; flex-direction: column; gap: 12px;">
-                        <a href="crear-lonchera.html" class="btn btn-primary">
-                            <i class="fas fa-plus"></i> Nueva Lonchera
-                        </a>
-                        <a href="hijos.html" class="btn btn-outline">
-                            <i class="fas fa-child"></i> Agregar Hijo
-                        </a>
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <div class="card p-4 card-shadow">
+                        <h5 class="mb-3 fw-bold">Acciones Rápidas</h5>
+                        <div class="d-grid gap-2">
+                            <a href="crear-lonchera.html" class="btn btn-primary-nb py-2">
+                                <i class="fas fa-plus me-2"></i> Crear Nueva Lonchera
+                            </a>
+                            <a href="hijos.html" class="btn btn-outline-primary py-2">
+                                <i class="fas fa-child me-2"></i> Gestionar Hijos
+                            </a>
+                        </div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <h3 style="margin-bottom: 16px;">Información de Membresía</h3>
-                    <p><strong>Plan:</strong> <span id="planMembresia">-</span></p>
-                    <p><strong>Direcciones disponibles:</strong> <span id="maxDirecciones">-</span></p>
+                <div class="col-md-6">
+                    <div class="card p-4 card-shadow">
+                        <h5 class="mb-3 fw-bold">Información de Membresía</h5>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="fw-bold">Plan Actual:</span>
+                            <span id="planMembresia" class="badge bg-success fs-6">-</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Límite de Direcciones:</span>
+                            <span id="maxDirecciones">-</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>

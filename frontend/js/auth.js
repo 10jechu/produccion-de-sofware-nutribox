@@ -10,7 +10,7 @@ const handleRegister = async (event) => {
     try {
         showLoading();
         
-        const response = await API.register({
+        await API.register({
             nombre,
             email,
             password,
@@ -56,7 +56,7 @@ const handleLogin = async (event) => {
         saveToken(response.access_token);
         
         // Obtener datos del usuario
-        const users = await API.getUsers();
+        const users = await API.getUsers(); 
         const user = users.find(u => u.email === email);
         
         if (user) {
@@ -65,8 +65,8 @@ const handleLogin = async (event) => {
         
         closeLoading();
         
-        // Redirigir al dashboard
-        window.location.href = 'dashboard.html';
+        // Redirigir al dashboard (Usamos ruta absoluta para evitar problemas de Live Server)
+        window.location.href = '/dashboard.html';
         
     } catch (error) {
         closeLoading();

@@ -9,4 +9,5 @@ class Alimento(Base):
     kcal: Mapped[float] = mapped_column(Float, nullable=False)
     proteinas: Mapped[float] = mapped_column(Float, nullable=False)
     carbos: Mapped[float] = mapped_column(Float, nullable=False)
+    costo: Mapped[float] = mapped_column(Float, nullable=False, default=0.0) # NUEVO CAMPO: COSTO
     activo: Mapped[bool] = mapped_column(Boolean, default=True)

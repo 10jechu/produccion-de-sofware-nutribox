@@ -67,6 +67,12 @@ class ChildDetail(BaseModel):
     loncheras_recientes: list[LoncheraMini]
     estadisticas: EstadisticasHijo
 
+class NutricionTotal(BaseModel):
+    calorias: float
+    proteinas: float
+    carbohidratos: float
+    costo_total: float # NUEVO CAMPO: COSTO TOTAL
+
 class ItemNutricional(BaseModel):
     alimento_id: int
     nombre: str
@@ -74,11 +80,7 @@ class ItemNutricional(BaseModel):
     kcal: float
     proteinas: float
     carbos: float
-
-class NutricionTotal(BaseModel):
-    calorias: float
-    proteinas: float
-    carbohidratos: float
+    costo: float # NUEVO CAMPO: COSTO POR UNIDAD
 
 class LunchboxDetailFull(BaseModel):
     id: int

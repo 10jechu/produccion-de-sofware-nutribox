@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -10,19 +9,20 @@ from app.core.security import get_password_hash, verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-# Helpers locales para asegurar rol/membresía
-def _get_or_create_role(db: Session, nombre: str) -> Rol:
+# Simplificación: El sistema solo usará el Rol "Usuario"
+def _get_or_create_role(db: Session, nombre: str = "Usuario") -> Rol:
     rol = db.query(Rol).filter_by(nombre=nombre).first()
     if not rol:
         rol = Rol(nombre=nombre)
         db.add(rol); db.commit(); db.refresh(rol)
     return rol
 
+# Simplificación: Las membresías son automáticas
 def _get_or_create_membership(db: Session, tipo: str) -> Membresia:
     mem = db.query(Membresia).filter_by(tipo=tipo).first()
     if not mem:
-        # Lógica simple de límites por tipo (ajústalo si usas otra regla)
-        max_dir = 1 if tipo.lower() == "free" else 3
+        # Lógica de límites (Básico/Estandar=1, Premium=3)
+        max_dir = 3 if tipo.lower() == "premium" else 1
         mem = Membresia(tipo=tipo, max_direcciones=max_dir)
         db.add(mem); db.commit(); db.refresh(mem)
     return mem
@@ -33,7 +33,9 @@ def register(payload: UserRegister, db: Session = Depends(get_db)):
     if db.query(Usuario).filter_by(email=payload.email).first():
         raise HTTPException(status_code=400, detail="El email ya está registrado")
 
-    rol = _get_or_create_role(db, payload.rol)
+    # Rol fijo: Usuario
+    rol = _get_or_create_role(db, "Usuario")
+    # Membresía basada en selección de usuario
     mem = _get_or_create_membership(db, payload.membresia)
 
     u = Usuario(
@@ -49,7 +51,6 @@ def register(payload: UserRegister, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=Token, summary="Login")
 def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    # En nuestro flujo el "username" es el email
     user = db.query(Usuario).filter_by(email=form.username).first()
     if not user or not verify_password(form.password, user.hash_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas")

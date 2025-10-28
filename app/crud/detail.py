@@ -131,7 +131,8 @@ def get_lunchbox_detail_full(db: Session, lunchbox_id: int) -> dict | None:
             LoncheraAlimento.cantidad,
             Alimento.kcal,
             Alimento.proteinas,
-            Alimento.carbos
+            Alimento.carbos,
+            Alimento.costo # NUEVO: SELECCIONAR COSTO
         )
         .join(Alimento, Alimento.id == LoncheraAlimento.alimento_id)
         .where(LoncheraAlimento.lonchera_id == lunchbox_id)
@@ -144,7 +145,8 @@ def get_lunchbox_detail_full(db: Session, lunchbox_id: int) -> dict | None:
             "cantidad": i[2],
             "kcal": i[3],
             "proteinas": i[4],
-            "carbos": i[5]
+            "carbos": i[5],
+            "costo": i[6] # AGREGAMOS COSTO POR UNIDAD
         }
         for i in items
     ]
@@ -152,6 +154,7 @@ def get_lunchbox_detail_full(db: Session, lunchbox_id: int) -> dict | None:
     total_cal = sum(i[3] * i[2] for i in items)
     total_prot = sum(i[4] * i[2] for i in items)
     total_carb = sum(i[5] * i[2] for i in items)
+    total_cost = sum(i[6] * i[2] for i in items) # NUEVO: CÁLCULO DE COSTO TOTAL
     
     direccion_data = None
     if lonchera.direccion_id:
@@ -187,7 +190,8 @@ def get_lunchbox_detail_full(db: Session, lunchbox_id: int) -> dict | None:
         "nutricion_total": {
             "calorias": round(total_cal, 2),
             "proteinas": round(total_prot, 2),
-            "carbohidratos": round(total_carb, 2)
+            "carbohidratos": round(total_carb, 2),
+            "costo_total": round(total_cost, 2) # AÑADIMOS EL COSTO TOTAL
         },
         "alertas": alertas
     }
