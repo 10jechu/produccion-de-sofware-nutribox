@@ -40,13 +40,19 @@ const confirmAction = (title, text) => {
     });
 };
 
-// Formatear fecha
+//Date
 const formatDate = (dateString) => {
-    const date = new Date(dateString);
+    // Divide la fecha YYYY-MM-DD para evitar problemas de zona horaria
+    const parts = dateString.split('-');
+    // Crea la fecha usando UTC para asegurar que no cambie el día
+    // Nota: El mes en el constructor de Date es 0-indexado (0=Enero, 1=Febrero, ...)
+    const date = new Date(Date.UTC(parts[0], parts[1] - 1, parts[2]));
+
     return date.toLocaleDateString('es-CO', {
         year: 'numeric',
         month: 'long',
-        day: 'numeric'
+        day: 'numeric',
+        timeZone: 'UTC' // Importante: Formatea usando UTC para consistencia
     });
 };
 
