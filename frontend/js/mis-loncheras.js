@@ -142,5 +142,26 @@ async function viewDetail(id) {
         showNotification("Error", "No se pudo cargar el detalle", "error");
     }
 }
-        
+
+    async function deleteLunchbox(id) {
+    const result = await confirmAction(
+        "¿Eliminar Lonchera?",
+        "Esta acción eliminará la lonchera y todos sus alimentos asociados de forma permanente." // Puedes cambiar este texto si el backend hace soft delete
+    );
+
+    if (result.isConfirmed) {
+        try {
+            showLoading();
+            // Asegúrate de que API.deleteLunchbox exista en api.js
+            await API.deleteLunchbox(id);
+            closeLoading();
+            showNotification("Éxito", "Lonchera eliminada correctamente", "success");
+            loadLunchboxes(); // Recargar la lista
+        } catch (error) {
+            closeLoading();
+            showNotification("Error", error.message, "error");
+        }
+    }
+}
+
 loadLunchboxes();

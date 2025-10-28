@@ -4,6 +4,7 @@ from app.db.models.lunchbox import Lonchera, LoncheraAlimento
 from app.db.models.core_models import Hijo
 from app.db.models.alimento import Alimento
 from app.db.models.address import Direccion
+from sqlalchemy import delete as sqlalchemy_delete
 
 def list_(db: Session, hijo_id: int | None = None) -> list[Lonchera]:
     stmt = select(Lonchera)
@@ -103,4 +104,19 @@ def remove_item(db: Session, lonchera_id: int, alimento_id: int) -> None:
         raise LookupError("Item no encontrado")
     
     db.delete(item)
+    db.commit()
+
+def delete(db: Session, lonchera_id: int) -> None:
+    """Elimina una lonchera y todos sus LoncheraAlimento asociados."""
+    lonchera = db.get(Lonchera, lonchera_id)
+    if not lonchera:
+        raise LookupError("Lonchera no encontrada")
+
+    # Eliminar primero los items asociados (LoncheraAlimento)
+    db.execute(
+        sqlalchemy_delete(LoncheraAlimento).where(LoncheraAlimento.lonchera_id == lonchera_id)
+    )
+
+    # Luego eliminar la lonchera
+    db.delete(lonchera)
     db.commit()

@@ -70,3 +70,13 @@ def remove_item(lunchbox_id: int, alimento_id: int, db: Session = Depends(get_db
         crud.remove_item(db, lunchbox_id, alimento_id); return
     except LookupError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+
+@router.delete("/{lunchbox_id}", status_code=status.HTTP_204_NO_CONTENT, summary="Eliminar lonchera")
+def delete_lunchbox(lunchbox_id: int, db: Session = Depends(get_db)):
+    """Elimina una lonchera y sus items asociados."""
+    try:
+        crud.delete(db, lunchbox_id) # Necesitamos crear crud.delete en app/crud/lunchbox.py
+        return
+    except LookupError as e:
+        raise HTTPException(status_code=404, detail=str(e))

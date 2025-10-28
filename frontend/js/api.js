@@ -168,6 +168,10 @@ const API = {
     removeItemFromLunchbox: (lunchboxId, alimentoId) => apiFetch(`/lunchboxes/${lunchboxId}/items/${alimentoId}`, {
         method: 'DELETE'
     }),
+
+    deleteLunchbox: (id) => apiFetch(`/lunchboxes/${id}`, {
+        method: 'DELETE'
+    }),
     // ------------------------------------
 
     // Restricciones
