@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, onMounted, computed } from 'vue';
 import Swal from 'sweetalert2';
 import apiService from '@/services/api.service';
@@ -28,10 +28,10 @@ async function loadFoods() {
     }
 }
 
-// --- FUNCIONES CRUD (Adaptadas de tu frontend antiguo) ---
+// --- Funciones CRUD (ya corregidas en el backend) ---
 
-// Mostrar modal para AGREGAR alimento
 async function showAddFoodModal() {
+    // ... (Asumimos que el contenido del modal ya existe y está bien)
     const { value: formValues } = await Swal.fire({
         title: "Agregar Nuevo Alimento",
         html: `
@@ -64,7 +64,7 @@ async function showAddFoodModal() {
             const carbos = parseFloat(carbosStr);
             const costo = parseFloat(costoStr);
 
-            if (isNaN(kcal) || isNaN(proteinas) || isNaN(carbos) || isNaN(costo)) {
+            if (isNaN(kcal) || isNaN(kcal) || isNaN(proteinas) || isNaN(carbos) || isNaN(costo)) {
                 Swal.showValidationMessage("Los valores numéricos deben ser números válidos.");
                 return false;
             }
@@ -90,7 +90,6 @@ async function showAddFoodModal() {
     }
 }
 
-// Mostrar modal para EDITAR alimento
 async function showEditFoodModal(foodId) {
     const foodToEdit = foods.value.find(f => f.id === foodId);
     if (!foodToEdit) {
@@ -127,7 +126,6 @@ async function showEditFoodModal(foodId) {
             const costoStr = document.getElementById("swal-costo")?.value;
             const activo = document.getElementById("swal-activo")?.checked;
 
-            // Validación (similar a agregar)
              if (!nombre || !kcalStr || !proteinasStr || !carbosStr || !costoStr) {
                 Swal.showValidationMessage("Todos los campos son requeridos.");
                 return false;
@@ -145,7 +143,6 @@ async function showEditFoodModal(foodId) {
                  Swal.showValidationMessage("Los valores numéricos no pueden ser negativos.");
                 return false;
             }
-            // Devolvemos solo los campos que podrían cambiar (PATCH)
             return { nombre, kcal, proteinas, carbos, costo, activo }; // Incluye el estado 'activo'
         }
     });
@@ -164,7 +161,6 @@ async function showEditFoodModal(foodId) {
     }
 }
 
-// Función para DESACTIVAR (soft delete) alimento
 async function deleteFood(foodId) {
     const foodToDelete = foods.value.find(f => f.id === foodId);
      if (!foodToDelete) return;
@@ -192,8 +188,6 @@ async function deleteFood(foodId) {
     if (result.isConfirmed) {
         try {
             Swal.showLoading();
-            // Si está activo, hacemos DELETE (soft delete en backend)
-            // Si está inactivo, hacemos PATCH para poner activo: true
             if (isActive) {
                  await apiService.delete(`/foods/${foodId}`); // El backend hace soft delete
             } else {
@@ -209,7 +203,6 @@ async function deleteFood(foodId) {
     }
 }
 
-// Ver detalle (Modal simple)
 async function viewFoodDetail(foodId) {
     const food = foods.value.find(f => f.id === foodId);
     if (!food) return;
@@ -230,7 +223,6 @@ async function viewFoodDetail(foodId) {
 }
 
 
-// Carga inicial al montar el componente
 onMounted(() => {
     loadFoods();
 });
@@ -288,6 +280,7 @@ onMounted(() => {
                             <td>
                                 <button class="btn btn-sm btn-outline-info me-1" title="Ver Detalle" @click="viewFoodDetail(food.id)">
                                     <i class="fas fa-eye"></i>
+                                    <span class="d-none d-md-inline"> Ver Detalle</span>
                                 </button>
                                 <span v-if="isUserAdmin">
                                     <button class="btn btn-sm btn-outline-warning me-1" title="Editar" @click="showEditFoodModal(food.id)"><i class="fas fa-edit"></i></button>
