@@ -26,10 +26,10 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"], # Permite cualquier origen (para desarrollo)
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"], # Permite todos los métodos HTTP
+    allow_headers=["*"], # Permite todas las cabeceras
 )
 
 @app.get("/", tags=["health"])
