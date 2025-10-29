@@ -1,5 +1,5 @@
 from fastapi import APIRouter
-from app.api.v1.routers import auth, users, children, addresses, restrictions, foods, lunchboxes
+from app.api.v1.routers import auth, users, children, addresses, restrictions, foods, lunchboxes, menus_predeterminados
 
 api_router = APIRouter(prefix="/api/v1")
 
@@ -11,3 +11,4 @@ api_router.include_router(addresses.router)    # 4. Direcciones
 api_router.include_router(restrictions.router) # 5. Restricciones
 api_router.include_router(foods.router)        # 6. Alimentos
 api_router.include_router(lunchboxes.router)   # 7. Loncheras
+api_router.include_router(menus_predeterminados.router) #Menus predeterminados

@@ -15,6 +15,7 @@ tags_metadata = [
     {"name": "restrictions", "description": "5️⃣ Restricciones alimentarias"},
     {"name": "foods", "description": "6️⃣ Catalogo de alimentos"},
     {"name": "lunchboxes", "description": "7️⃣ Loncheras escolares"},
+    {"name": "menus_predeterminados", "description": "8️⃣ Menús Predeterminados (Admin)"},
 ]
 
 app = FastAPI(

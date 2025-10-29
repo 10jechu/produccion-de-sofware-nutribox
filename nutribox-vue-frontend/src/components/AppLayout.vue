@@ -17,15 +17,17 @@ const logout = () => {
     <aside class="sidebar bg-white shadow-sm p-4 d-flex flex-column" style="width: 260px;">
         <div class="sidebar-logo mb-4 fs-4 fw-bold text-primary-nb">🍃 NutriBox</div>
         <nav class="nav nav-pills flex-column sidebar-nav">
-            <router-link to="/dashboard" class="nav-link text-dark"><i class="fas fa-home fa-fw me-2"></i> Dashboard</router-link>
-            <router-link to="/hijos" class="nav-link text-dark"><i class="fas fa-child fa-fw me-2"></i> Mis Hijos</router-link>
-            <router-link to="/crear-lonchera" class="nav-link text-dark"><i class="fas fa-plus-circle fa-fw me-2"></i> Crear Lonchera</router-link>
-            <router-link to="/mis-loncheras" class="nav-link text-dark"><i class="fas fa-list fa-fw me-2"></i> Mis Loncheras</router-link>
-            <router-link to="/direcciones" class="nav-link text-dark"><i class="fas fa-map-marker-alt fa-fw me-2"></i> Direcciones</router-link>
-            <router-link to="/restricciones" class="nav-link text-dark"><i class="fas fa-ban fa-fw me-2"></i> Restricciones</router-link>
+
+            <router-link v-if="!isUserAdmin" to="/dashboard" class="nav-link text-dark"><i class="fas fa-home fa-fw me-2"></i> Dashboard</router-link>
+            <router-link v-if="!isUserAdmin" to="/hijos" class="nav-link text-dark"><i class="fas fa-child fa-fw me-2"></i> Mis Hijos</router-link>
+            <router-link v-if="!isUserAdmin" to="/crear-lonchera" class="nav-link text-dark"><i class="fas fa-plus-circle fa-fw me-2"></i> Crear Lonchera</router-link>
+            <router-link v-if="!isUserAdmin" to="/mis-loncheras" class="nav-link text-dark"><i class="fas fa-list fa-fw me-2"></i> Mis Loncheras</router-link>
+            <router-link v-if="!isUserAdmin" to="/direcciones" class="nav-link text-dark"><i class="fas fa-map-marker-alt fa-fw me-2"></i> Direcciones</router-link>
+            <router-link v-if="!isUserAdmin" to="/restricciones" class="nav-link text-dark"><i class="fas fa-ban fa-fw me-2"></i> Restricciones</router-link>
+            <router-link v-if="!isUserAdmin" to="/estadisticas" class="nav-link text-dark"><i class="fas fa-chart-line fa-fw me-2"></i> Estadísticas</router-link>
+
             <router-link to="/alimentos" class="nav-link text-dark"><i class="fas fa-utensils fa-fw me-2"></i> Alimentos</router-link>
             <router-link to="/menus" class="nav-link text-dark"><i class="fas fa-book-open fa-fw me-2"></i> Menús</router-link>
-            <router-link to="/estadisticas" class="nav-link text-dark"><i class="fas fa-chart-line fa-fw me-2"></i> Estadísticas</router-link>
             <router-link to="/perfil" class="nav-link text-dark"><i class="fas fa-user-circle fa-fw me-2"></i> Mi Perfil</router-link>
 
             <router-link v-if="isUserAdmin" to="/admin/foods" class="nav-link text-dark mt-3">
@@ -41,7 +43,5 @@ const logout = () => {
 </template>
 
 <style scoped>
-/* Solo estilos específicos del layout */
 .sidebar { height: 100vh; }
-/* La clase 'router-link-exact-active' se encarga de dar el color verde al link activo (definido en src/assets/main.css) */
 </style>

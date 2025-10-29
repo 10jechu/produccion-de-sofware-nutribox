@@ -6,13 +6,12 @@ import { isAdmin, getUserDetail } from '@/utils/user';
 import authService from '@/services/auth.service';
 
 const foods = ref([]);
-const adminLunchboxes = ref([]);
+const predeterminedMenus = ref([]);
 const isLoadingFoods = ref(true);
-const adminLunchboxesLoading = ref(true);
+const isLoadingMenus = ref(true);
 const isUserAdmin = computed(() => isAdmin());
 const adminUserId = computed(() => getUserDetail()?.id);
 
-// Función para formatear fecha
 function formatDate(dateString) {
     if (!dateString) return 'N/A';
     const parts = dateString.split('-');
@@ -20,14 +19,12 @@ function formatDate(dateString) {
     return date.toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' });
 }
 
-// Función para formatear moneda
 function formatCurrency(value) {
     const numberValue = Number(value);
     if (isNaN(numberValue)) return '$ 0';
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(numberValue);
 }
 
-// Carga TODOS los alimentos (incluyendo inactivos)
 async function loadFoods() {
     isLoadingFoods.value = true;
     if (!isUserAdmin.value) {
@@ -46,26 +43,19 @@ async function loadFoods() {
     }
 }
 
-// Cargar Loncheras creadas por el Admin
-async function loadAdminLunchboxes() {
-    adminLunchboxesLoading.value = true;
-    if (!isUserAdmin.value || !adminUserId.value) {
-      adminLunchboxesLoading.value = false;
-      return;
-    }
+async function loadPredeterminedMenus() {
+    isLoadingMenus.value = true;
+    if (!isUserAdmin.value) { isLoadingMenus.value = false; return; }
     try {
-        const allLunchboxes = await apiService.get('/lunchboxes');
-        // TODO: Idealmente, filtrar en backend por loncheras creadas por el admin
-        adminLunchboxes.value = allLunchboxes;
-        adminLunchboxesLoading.value = false;
+        predeterminedMenus.value = await apiService.get('/menus-predeterminados');
+        isLoadingMenus.value = false;
     } catch (error) {
-        adminLunchboxesLoading.value = false;
-        console.error("Error cargando loncheras del admin:", error);
-        Swal.fire('Error', 'No se pudieron cargar las loncheras para marcar.', 'error');
+        isLoadingMenus.value = false;
+        console.error("Error cargando menús predeterminados:", error);
+        Swal.fire('Error', 'No se pudieron cargar los menús predeterminados.', 'error');
     }
 }
 
-// --- MODAL PARA AGREGAR ALIMENTO ---
 const showAddFoodModal = async () => {
     const { value: formValues } = await Swal.fire({
         title: "Agregar Nuevo Alimento",
@@ -113,10 +103,8 @@ const showAddFoodModal = async () => {
     }
 };
 
-// --- MODAL PARA EDITAR ALIMENTO ---
 const showEditFoodModal = async (foodToEdit) => {
     if (!foodToEdit) return;
-
     const { value: formValues } = await Swal.fire({
         title: "Editar Alimento",
         html: `
@@ -162,15 +150,12 @@ const showEditFoodModal = async (foodToEdit) => {
     }
 };
 
-// --- FUNCIÓN PARA ACTIVAR/DESACTIVAR ALIMENTO ---
 const toggleFoodStatus = async (food) => {
     if (!food) return;
-
     const actionText = food.activo ? "Desactivar" : "Activar";
     const confirmText = food.activo
         ? "Esto marcará el alimento como inactivo y no aparecerá en el catálogo para usuarios."
         : "Esto volverá a mostrar el alimento en el catálogo.";
-
     const result = await Swal.fire({
         title: `¿${actionText} alimento?`,
         text: confirmText,
@@ -196,36 +181,169 @@ const toggleFoodStatus = async (food) => {
     }
 };
 
-// --- Función para Marcar Lonchera como Predeterminada ---
-const markAsPredetermined = async (id) => {
-    const result = await Swal.fire({
-        title: "¿Marcar como Menú Predeterminado?",
-        text: "Esta lonchera estará visible para todos los usuarios en la sección de Menús.",
-        icon: 'question',
+const showAddPredeterminedMenuModal = async () => {
+    const { value: formValues } = await Swal.fire({
+        title: "Crear Nuevo Menú Predeterminado",
+        html: `
+            <input id="swal-menu-nombre" class="swal2-input form-control" placeholder="Nombre del Menú (ej: Lunes Saludable)" required>
+            <textarea id="swal-menu-desc" class="swal2-input form-control" placeholder="Descripción corta (opcional)"></textarea>
+        `,
+        focusConfirm: false,
         showCancelButton: true,
-        confirmButtonColor: '#4CAF50',
+        confirmButtonColor: "#4CAF50",
+        cancelButtonColor: "#DC3545",
+        confirmButtonText: "Crear y Añadir Alimentos",
+        cancelButtonText: "Cancelar",
+        preConfirm: () => {
+            const nombre = document.getElementById("swal-menu-nombre").value;
+            const descripcion = document.getElementById("swal-menu-desc").value;
+            if (!nombre) {
+                Swal.showValidationMessage("El nombre es requerido."); return false;
+            }
+            return { nombre, descripcion };
+        }
+    });
+
+    if (formValues) {
+        try {
+            Swal.fire({ title: 'Creando menú...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            const newMenu = await apiService.post('/menus-predeterminados', formValues);
+            Swal.close();
+            Swal.fire('¡Éxito!', 'Menú creado. Ahora añade alimentos.', 'success');
+            await loadPredeterminedMenus();
+            showEditPredeterminedMenuItemsModal(newMenu);
+        } catch (error) {
+            Swal.close();
+            Swal.fire('Error', error.message || 'No se pudo crear el menú.', 'error');
+        }
+    }
+};
+
+const showEditPredeterminedMenuItemsModal = async (menu) => {
+    if (foods.value.length === 0) await loadFoods();
+
+    let currentMenu = menu; // Variable para mantener el estado actualizado del menú
+
+    const buildModalHtml = (menuData) => {
+        let itemsHtml = menuData.items && menuData.items.length > 0
+            ? menuData.items.map(item => `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    ${item.alimento?.nombre || `Alimento ID ${item.alimento_id}`} (x${item.cantidad})
+                    <button class="btn btn-sm btn-outline-danger btn-remove-item" data-alimento-id="${item.alimento_id}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </li>`).join('')
+            : '<li class="list-group-item text-muted">Aún no hay alimentos.</li>';
+
+        const foodOptions = foods.value.filter(f => f.activo).map(f => `<option value="${f.id}">${f.nombre}</option>`).join('');
+
+        return `
+            <h5>Alimentos Actuales</h5>
+            <ul class="list-group list-group-flush mb-3" id="current-items">${itemsHtml}</ul>
+            <hr>
+            <h5>Añadir Alimento</h5>
+            <div class="input-group mb-3">
+                <select id="swal-select-food" class="form-select">
+                    <option value="">Selecciona un alimento...</option>
+                    ${foodOptions}
+                </select>
+                <input id="swal-quantity" type="number" class="form-control" value="1" min="1" style="max-width: 80px;">
+                <button class="btn btn-success" id="swal-add-item-btn">Añadir</button>
+            </div>
+        `;
+    }
+
+    const swalInstance = await Swal.fire({
+        title: `Editar Items: ${menu.nombre}`,
+        html: buildModalHtml(currentMenu),
+        showCancelButton: true,
+        showConfirmButton: false,
+        cancelButtonText: 'Cerrar',
+        width: '600px',
+        didOpen: (modal) => {
+            const addItemHandler = async () => {
+                const alimentoId = modal.querySelector('#swal-select-food').value;
+                const cantidad = parseInt(modal.querySelector('#swal-quantity').value) || 1;
+                if (!alimentoId) return;
+
+                try {
+                    Swal.showLoading();
+                    await apiService.post(`/menus-predeterminados/${currentMenu.id}/items`, { alimento_id: parseInt(alimentoId), cantidad });
+                    currentMenu = await apiService.get(`/menus-predeterminados/${currentMenu.id}`); // Recarga
+                    Swal.update({ html: buildModalHtml(currentMenu) }); // Actualiza HTML del modal
+                    Swal.hideLoading();
+                    loadPredeterminedMenus(); // Recarga tabla principal en fondo
+                } catch (error) {
+                    Swal.showValidationMessage(error.message || 'Error al añadir item.');
+                }
+            };
+
+            const removeItemHandler = async (event) => {
+                const button = event.target.closest('.btn-remove-item');
+                if (!button) return;
+                const alimentoIdToRemove = button.getAttribute('data-alimento-id');
+                 if (!alimentoIdToRemove) return;
+
+                try {
+                    Swal.showLoading();
+                    await apiService.delete(`/menus-predeterminados/${currentMenu.id}/items/${alimentoIdToRemove}`);
+                    currentMenu = await apiService.get(`/menus-predeterminados/${currentMenu.id}`); // Recarga
+                    Swal.update({ html: buildModalHtml(currentMenu) }); // Actualiza HTML
+                    Swal.hideLoading();
+                    loadPredeterminedMenus(); // Recarga tabla principal en fondo
+                } catch (error) {
+                    Swal.showValidationMessage(error.message || 'Error al quitar item.');
+                }
+            };
+
+            modal.querySelector('#swal-add-item-btn').addEventListener('click', addItemHandler);
+            modal.querySelector('#current-items').addEventListener('click', removeItemHandler);
+
+            // Guardar referencias para limpiar al cerrar
+            modal.addItemHandler = addItemHandler;
+            modal.removeItemHandler = removeItemHandler;
+        },
+        willClose: (modal) => {
+            // Limpiar listeners al cerrar el modal
+            if (modal && modal.querySelector('#swal-add-item-btn') && modal.addItemHandler) {
+               modal.querySelector('#swal-add-item-btn').removeEventListener('click', modal.addItemHandler);
+            }
+             if (modal && modal.querySelector('#current-items') && modal.removeItemHandler) {
+               modal.querySelector('#current-items').removeEventListener('click', modal.removeItemHandler);
+            }
+        }
+    });
+};
+
+const deletePredeterminedMenu = async (id) => {
+    const result = await Swal.fire({
+        title: "¿Eliminar Menú Predeterminado?",
+        text: "Esta acción eliminará la plantilla de menú permanentemente.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#DC3545',
         cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Sí, Marcar',
+        confirmButtonText: 'Sí, Eliminar',
         cancelButtonText: 'Cancelar'
     });
 
     if (result.isConfirmed) {
         try {
-            Swal.fire({ title: 'Marcando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-            await apiService.patch('/lunchboxes/' + id, { es_predeterminada: true });
+            Swal.fire({ title: 'Eliminando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            await apiService.delete('/menus-predeterminados/' + id);
             Swal.close();
-            Swal.fire('¡Éxito!', 'Menú marcado y visible para todos.', 'success');
-            await loadAdminLunchboxes();
+            Swal.fire('¡Éxito!', 'Menú predeterminado eliminado.', 'success');
+            await loadPredeterminedMenus();
         } catch (error) {
             Swal.close();
-            Swal.fire('Error', error.message || 'No se pudo marcar la lonchera.', 'error');
+            Swal.fire('Error', error.message || 'No se pudo eliminar el menú.', 'error');
         }
     }
 };
 
 onMounted(() => {
     loadFoods();
-    loadAdminLunchboxes();
+    loadPredeterminedMenus();
 });
 </script>
 
@@ -240,8 +358,8 @@ onMounted(() => {
               <i class="fas fa-plus me-1"></i> Agregar Alimento
           </button>
       </div>
-
-      <div class="card p-4 card-shadow mb-5"> <div v-if="isLoadingFoods" class="text-center p-5">
+      <div class="card p-4 card-shadow mb-5">
+          <div v-if="isLoadingFoods" class="text-center p-5">
               <i class="fas fa-spinner fa-spin fa-2x text-primary-nb"></i>
               <p class="mt-2 text-muted">Cargando alimentos...</p>
           </div>
@@ -296,55 +414,43 @@ onMounted(() => {
           <div class="d-flex justify-content-between align-items-center mb-3">
               <div>
                   <h1 class="h3 text-danger">Panel de Administración - Menús Predeterminados</h1>
-                  <p class="text-muted">Marcar loncheras creadas para que sean visibles a todos.</p>
+                  <p class="text-muted">Crear y gestionar las plantillas de menú para usuarios.</p>
               </div>
-              <router-link to="/crear-lonchera" class="btn btn-outline-primary btn-sm">
-                  <i class="fas fa-plus me-1"></i> Crear Lonchera Base
-              </router-link>
+               <button class="btn btn-success" @click="showAddPredeterminedMenuModal">
+                  <i class="fas fa-plus me-1"></i> Crear Nuevo Menú
+              </button>
           </div>
-          <p class="text-muted small mb-3">Instrucción: Crea la lonchera en el panel principal (asígnale a un hijo de prueba si es necesario) y luego márcala aquí como predeterminada.</p>
 
-          <div v-if="adminLunchboxesLoading" class="text-center p-5">
+          <div v-if="isLoadingMenus" class="text-center p-5">
               <i class="fas fa-spinner fa-spin fa-2x text-primary-nb"></i>
-              <p class="mt-2 text-muted">Cargando loncheras...</p>
+              <p class="mt-2 text-muted">Cargando menús predeterminados...</p>
           </div>
-          <div v-else-if="adminLunchboxes.length === 0" class="text-center p-5 text-muted">
-              No hay loncheras creadas para marcar.
+          <div v-else-if="predeterminedMenus.length === 0" class="text-center p-5 text-muted">
+              No hay menús predeterminados creados. ¡Crea el primero!
           </div>
           <div v-else class="table-responsive">
               <table class="table table-hover align-middle">
                   <thead>
                       <tr>
                           <th>ID</th>
-                          <th>Fecha Creación/Ref</th>
-                          <th>Estado Actual</th>
-                          <th>Es Predeterminada</th>
-                          <th>Acción</th>
+                          <th>Nombre</th>
+                          <th>Descripción</th>
+                          <th>Nº Items</th>
+                          <th>Acciones</th>
                       </tr>
                   </thead>
                   <tbody>
-                      <tr v-for="lb in adminLunchboxes" :key="lb.id">
-                          <td>#{{ lb.id }}</td>
-                          <td>{{ formatDate(lb.fecha) }}</td>
+                      <tr v-for="menu in predeterminedMenus" :key="menu.id">
+                          <td>#{{ menu.id }}</td>
+                          <td><strong>{{ menu.nombre }}</strong></td>
+                          <td>{{ menu.descripcion || '-' }}</td>
+                          <td>{{ menu.items?.length || 0 }}</td>
                           <td>
-                              <span :class="['badge', lb.estado === 'Borrador' ? 'bg-warning text-dark' : 'bg-secondary']">
-                                  {{ lb.estado }}
-                              </span>
-                          </td>
-                          <td>
-                              <span :class="['badge', lb.es_predeterminada ? 'bg-success' : 'bg-light text-dark']">
-                                  {{ lb.es_predeterminada ? 'Sí' : 'No' }}
-                              </span>
-                          </td>
-                          <td>
-                              <button
-                                  :disabled="lb.es_predeterminada"
-                                  :class="['btn', 'btn-sm', lb.es_predeterminada ? 'btn-outline-secondary disabled' : 'btn-primary-nb']"
-                                  @click="markAsPredetermined(lb.id)"
-                                  :title="lb.es_predeterminada ? 'Ya está marcada' : 'Marcar como Menú Predeterminado'"
-                              >
-                                  <i :class="['fas', lb.es_predeterminada ? 'fa-check' : 'fa-star']"></i>
-                                  {{ lb.es_predeterminada ? ' Marcada' : ' Marcar' }}
+                              <button class="btn btn-sm btn-outline-primary me-1" @click="showEditPredeterminedMenuItemsModal(menu)" title="Editar Items">
+                                  <i class="fas fa-pencil-alt"></i> Items
+                              </button>
+                              <button class="btn btn-sm btn-outline-danger" @click="deletePredeterminedMenu(menu.id)" title="Eliminar Menú">
+                                  <i class="fas fa-trash"></i>
                               </button>
                           </td>
                       </tr>
