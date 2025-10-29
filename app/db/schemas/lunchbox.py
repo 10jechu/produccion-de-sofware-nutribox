@@ -19,6 +19,7 @@ class LoncheraRead(ORMModel):
     fecha: date
     estado: str
     direccion_id: int | None
+    es_predeterminada: bool
 
 class LoncheraItemCreate(BaseModel):
     alimento_id: int

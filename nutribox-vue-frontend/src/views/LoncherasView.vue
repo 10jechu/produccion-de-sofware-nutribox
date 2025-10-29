@@ -4,7 +4,7 @@ import Swal from 'sweetalert2';
 import apiService from '@/services/api.service';
 import { getUserDetail } from '@/utils/user';
 import authService from '@/services/auth.service';
-import LunchboxRow from '@/components/LunchboxRow.vue'; 
+import LunchboxRow from '@/components/LunchboxRow.vue';
 
 const lunchboxes = ref([]);
 const hijos = ref([]);
@@ -23,7 +23,7 @@ function formatCurrency(value) {
 
 function getHijoName(hijoId) {
     const hijo = hijos.value.find(h => h.id === hijoId);
-    return hijo ? hijo.nombre : 'Hijo #' + hijoId; 
+    return hijo ? hijo.nombre : 'Hijo #' + hijoId;
 }
 
 function formatDate(dateString) {
@@ -42,54 +42,72 @@ async function loadLunchboxes() {
     }
 
     try {
-        const [baseLunchboxes, childrenList] = await Promise.all([
-            apiService.get('/lunchboxes'),
-            apiService.get('/children?usuario_id=' + user.id)
-        ]);
-        hijos.value = childrenList;
-        
-        const detailedLunchboxesPromises = baseLunchboxes.map(lb => 
+        // Obtenemos los hijos primero para saber a cuáles pertenecen las loncheras
+        hijos.value = await apiService.get('/children?usuario_id=' + user.id);
+        const hijoIds = hijos.value.map(h => h.id);
+
+        // Pedimos TODAS las loncheras (backend no filtra por usuario directamente ahora)
+        const allBaseLunchboxes = await apiService.get('/lunchboxes');
+
+        // Filtramos aquí por los hijos del usuario Y QUE NO SEAN PREDETERMINADAS
+        const userBaseLunchboxes = allBaseLunchboxes.filter(lb =>
+            hijoIds.includes(lb.hijo_id) && !lb.es_predeterminada // <-- ¡FILTRO CLAVE!
+        );
+
+        // Si no hay loncheras *personales*, muestra mensaje y termina
+        if (userBaseLunchboxes.length === 0) {
+            lunchboxes.value = [];
+            isLoading.value = false;
+            return; // No necesita cargar detalles si no hay loncheras
+        }
+
+        // Obtener el detalle completo SOLO para las loncheras personales
+        const detailedLunchboxesPromises = userBaseLunchboxes.map(lb =>
             apiService.get('/lunchboxes/' + lb.id + '/detail')
         );
-        
         const detailedLunchboxes = await Promise.all(detailedLunchboxesPromises);
 
+        // Mapea como antes
         lunchboxes.value = detailedLunchboxes.map(detail => ({
             ...detail,
-            hijo_nombre: getHijoName(detail.hijo.id), 
+            hijo_nombre: getHijoName(detail.hijo.id),
             items_count: detail.items.length,
-            total_calorias: detail.nutricion_total.calorias.toFixed(0), 
-            total_costo: detail.nutricion_total.costo_total 
+            total_calorias: detail.nutricion_total.calorias.toFixed(0),
+            total_costo: detail.nutricion_total.costo_total
         }));
-        
+
         isLoading.value = false;
     } catch (error) {
         isLoading.value = false;
-        Swal.fire('Error', error.message || 'No se pudieron cargar los detalles de las loncheras.', 'error');
+         if (error.message.includes("Token inválido") || error.message.includes("401")) {
+            authService.logout(); // Si falla por token, desloguear
+        } else {
+            Swal.fire('Error', error.message || 'No se pudieron cargar los detalles de las loncheras.', 'error');
+        }
     }
 }
 
 async function viewDetail(id) {
     try {
-        const detail = lunchboxes.value.find(lb => lb.id === id); 
+        const detail = lunchboxes.value.find(lb => lb.id === id);
         if (!detail) throw new Error("Detalle de lonchera no encontrado.");
 
-        const itemsList = detail.items.map(item => 
+        const itemsList = detail.items.map(item =>
             '<li class="list-group-item d-flex justify-content-between align-items-center">' +
-                '<span>' + item.nombre + '</span>' + 
-                '<span class="badge bg-light text-dark">' + item.cantidad + 'x - ' + item.kcal.toFixed(0) + ' kcal / ' + formatCurrency(item.costo) + '</span>' + 
+                '<span>' + item.nombre + '</span>' +
+                '<span class="badge bg-light text-dark">' + item.cantidad + 'x - ' + item.kcal.toFixed(0) + ' kcal / ' + formatCurrency(item.costo) + '</span>' +
              '</li>'
         ).join("");
-        
-        const alertasHtml = detail.alertas.map(a => 
+
+        const alertasHtml = detail.alertas.map(a =>
             // CORRECCION: Concatenacion simple en HTML de alertas
             '<div class="alert ' + (a.includes("ALERGIA") ? "alert-danger" : "alert-warning") + ' p-2 mt-2 mb-0" role="alert">' +
-                '<i class="fas fa-exclamation-triangle me-1"></i> ' + a + 
+                '<i class="fas fa-exclamation-triangle me-1"></i> ' + a +
             '</div>'
         ).join("");
 
         // CORRECCION: Usamos un string simple y concatenado para todo el HTML.
-        const swalHtml = 
+        const swalHtml =
              alertasHtml +
              '<div class="text-start mt-3">' +
                  '<h5 class="mb-3 border-bottom pb-2">Informacion General</h5>' +
@@ -98,10 +116,10 @@ async function viewDetail(id) {
                      '<div class="col-6 mb-2"><strong>Estado:</strong> <span class="badge ' + getBadgeClass(detail.estado) + '">' + detail.estado + '</span></div>' +
                      '<div class="col-12 mb-2"><strong>Entrega:</strong> ' + (detail.direccion ? detail.direccion.etiqueta + " - " + detail.direccion.direccion : "Sin direccion de envio") + '</div>' +
                  '</div>' +
-                 
+
                  '<h5 class="mt-4 mb-2 border-bottom pb-2">Alimentos (' + detail.items.length + ')</h5>' +
                  '<ul class="list-group list-group-flush">' + itemsList + '</ul>' +
-                 
+
                  '<h5 class="mt-4 mb-2 border-bottom pb-2">Nutricion y Costo (RF3.5)</h5>' +
                  '<ul class="list-group list-group-flush">' +
                      '<li class="list-group-item d-flex justify-content-between px-0">Calorias: <strong class="text-danger">' + detail.nutricion_total.calorias.toFixed(1) + ' kcal</strong></li>' +
@@ -110,7 +128,7 @@ async function viewDetail(id) {
                      '<li class="list-group-item d-flex justify-content-between px-0">Costo Total: <strong>' + formatCurrency(detail.nutricion_total.costo_total) + '</strong></li>' +
                  '</ul>' +
              '</div>'
-            
+
         Swal.fire({
             title: 'Lonchera para ' + detail.hijo_nombre,
             html: swalHtml,
@@ -140,7 +158,7 @@ async function deleteLunchbox(id) {
             await apiService.delete('/lunchboxes/' + id);
             Swal.close();
             Swal.fire('Exito', 'Lonchera eliminada correctamente', 'success');
-            loadLunchboxes(); 
+            loadLunchboxes();
         } catch (error) {
             Swal.close();
             Swal.fire('Error', error.message || 'Error al eliminar la lonchera', 'error');
@@ -166,7 +184,7 @@ onMounted(() => {
                 <i class="fas fa-spinner fa-spin fa-2x text-primary-nb"></i>
                 <p class="mt-2 text-muted">Cargando loncheras...</p>
             </div>
-            
+
             <div v-else-if="lunchboxes.length === 0" class="text-center p-5 text-muted">
                  No hay loncheras registradas
             </div>
