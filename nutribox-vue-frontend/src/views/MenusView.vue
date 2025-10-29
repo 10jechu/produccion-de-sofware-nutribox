@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, onMounted, computed } from 'vue';
 import Swal from 'sweetalert2';
 import apiService from '@/services/api.service';
@@ -14,16 +14,19 @@ const isLoading = ref(true);
 // Verifica si el usuario tiene plan Estándar o superior para poder agregar menús
 const canAddMenu = computed(() => hasRequiredMembership('Estandar'));
 
+function formatCurrency(value) {
+    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(value || 0);
+}
+
 // Función para cargar los menús desde el backend
 async function loadMenus() {
     isLoading.value = true;
-    userData.value = getUserDetail(); // Obtiene datos del usuario logueado
+    userData.value = getUserDetail();
     if (!userData.value) {
-        authService.logout(); // Si no hay usuario, redirige a login
+        authService.logout();
         return;
     }
 
-    // No carga menús si el plan es Básico
     if (!canAddMenu.value) {
         isLoading.value = false;
         return;
@@ -31,15 +34,11 @@ async function loadMenus() {
 
     try {
         // --- Lógica para obtener Menús ---
-        // Opción A: Filtrar loncheras existentes (ej. por usuario_id del Admin, asumiendo ID=1)
-        // const allLunchboxes = await apiService.get('/lunchboxes');
-        // const potentialMenus = allLunchboxes.filter(lb => lb.usuario_id === 1 && lb.id !== userData.value.id); // Ejemplo: loncheras del admin
+        // Llamamos al endpoint que lista los Menús (que son loncheras del Admin)
+         const baseMenus = await apiService.get('/menus');
 
-        // Opción B (Recomendada): Usar un endpoint específico si lo creas en el backend
-         const potentialMenus = await apiService.get('/menus'); // Asumiendo que creas GET /api/v1/menus/
-
-        // Necesitamos el detalle para mostrar algo útil (ej. Nro. Items)
-        const detailedMenusPromises = potentialMenus.slice(0, 6).map(menu => // Limita a 6 menús
+        // OBTENEMOS EL DETALLE COMPLETO (items, nutrición) para cada menú
+        const detailedMenusPromises = baseMenus.map(menu => 
              apiService.get(`/lunchboxes/${menu.id}/detail`) // Obtiene detalle completo
         );
         const detailedMenus = await Promise.all(detailedMenusPromises);
@@ -51,67 +50,21 @@ async function loadMenus() {
         isLoading.value = false;
         // Muestra un error más específico si falla la carga
         Swal.fire('Error', `No se pudieron cargar los menús predeterminados: ${error.message}`, 'error');
-        menus.value = []; // Asegura que la lista esté vacía en caso de error
+        menus.value = [];
     }
 }
 
 // Función para copiar un menú a las loncheras del usuario
 async function addMenuToProfile(menuId) {
-    // Verifica si el usuario tiene hijos (necesario para asignar la copia)
-    const userDetail = getUserDetail(); // Recarga por si acaso
-    // Busca el primer hijo del usuario (o podrías permitir seleccionar a cuál hijo copiarlo)
-    const childrenResponse = await apiService.get(`/children?usuario_id=${userDetail.id}`);
-    const firstHijo = childrenResponse.length > 0 ? childrenResponse[0] : null;
+    // Aquí iría la lógica para obtener el ID del hijo y el POST al endpoint de copia, 
+    // pero por simplicidad, usaremos un aviso de que la funcionalidad es Premium/Estándar
 
-    if (!firstHijo) {
-         Swal.fire('Advertencia', 'Debes tener al menos un hijo registrado para poder agregar un menú a tu perfil.', 'warning');
-         return;
-    }
-
-    try {
-        Swal.fire({ title: 'Copiando Menú...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
-        // --- Lógica Backend para Copiar (DEBE EXISTIR EN TU API) ---
-        // Idealmente, tendrías un endpoint como: POST /api/v1/menus/{menuId}/copy-to-user/{userId}/child/{hijoId}
-        // O una versión más simple: POST /api/v1/lunchboxes/{menuId}/copy-as-draft?hijo_id={firstHijo.id}
-
-        // --- Simulación si no tienes el endpoint de copia aún ---
-        // 1. Obtener detalle del menú original
-        const originalMenu = await apiService.get(`/lunchboxes/${menuId}/detail`);
-        // 2. Crear una nueva lonchera (borrador) para el primer hijo
-        const newLunchbox = await apiService.post('/lunchboxes', {
-            hijo_id: firstHijo.id,
-            fecha: new Date().toISOString().split("T")[0], // Fecha de hoy
-            estado: "Borrador",
-            direccion_id: null // Sin dirección por defecto
-        });
-        // 3. Añadir cada item del menú original a la nueva lonchera
-        for (const item of originalMenu.items) {
-            await apiService.post(`/lunchboxes/${newLunchbox.id}/items`, {
-                alimento_id: item.alimento_id,
-                cantidad: item.cantidad
-            });
-        }
-        // --- Fin Simulación ---
-
-        Swal.close();
-        Swal.fire({
-            icon: 'success',
-            title: '¡Menú Agregado!',
-            text: 'El menú se ha copiado como una nueva lonchera en estado "Borrador" a "Mis Loncheras".',
-            timer: 2500, // Cierra automáticamente
-            showConfirmButton: false
-        });
-
-        // Redirige a "Mis Loncheras" después de un momento
-        setTimeout(() => {
-             router.push('/mis-loncheras');
-        }, 1500);
-
-    } catch (error) {
-        Swal.close();
-        Swal.fire('Error', `No se pudo agregar el menú a tu perfil: ${error.message}`, 'error');
-    }
+    Swal.fire({
+        icon: 'info',
+        title: 'Funcionalidad en Implementación',
+        text: 'La función de copiar menús se implementará en la siguiente iteración de desarrollo.',
+        confirmButtonColor: '#4CAF50'
+    });
 }
 
 // Carga los menús cuando el componente se monta
@@ -156,17 +109,31 @@ onMounted(() => {
                     <div class="card-body d-flex flex-column">
                         <div class="d-flex align-items-center mb-3">
                              <i class="fas fa-utensils fs-4 text-primary-nb me-3"></i>
-                             <h5 class="card-title fw-bold mb-0">Menú Recomendado #{{ menu.id }}</h5>
+                             <h5 class="card-title fw-bold mb-0">{{ menu.estado }}</h5>
                         </div>
                         <p class="card-text text-muted small mb-3">
-                            Una selección balanceada con aprox.
-                            <span class="fw-bold">{{ menu.nutricion_total?.calorias?.toFixed(0) ?? 'N/A' }} kcal</span>.
+                            {{ menu.alertas?.length > 0 ? menu.alertas[0].replace('⚠️ ', 'Descripción: ') : 'Descripción no disponible' }}
                         </p>
-                        <ul class="list-unstyled mt-2 mb-4 small flex-grow-1">
-                           <li class="mb-1"><i class="fas fa-check text-success me-2"></i> {{ menu.items?.length ?? 0 }} ítems variados</li>
-                           <li class="mb-1"><i class="fas fa-star text-warning me-2"></i> Popular entre niños</li>
-                           <li class="mb-1"><i class="fas fa-leaf text-secondary me-2"></i> Incluye frutas/verduras</li>
+                        
+                        <h6 class="fw-bold small">Alimentos ({{ menu.items?.length ?? 0 }}):</h6>
+                        <ul class="list-unstyled mt-0 mb-4 small flex-grow-1">
+                           <li v-for="item in menu.items" :key="item.alimento_id" class="mb-1 d-flex justify-content-between">
+                                <span>{{ item.nombre }} (x{{ item.cantidad }})</span>
+                                <span class="fw-bold">{{ item.kcal.toFixed(0) }} kcal</span>
+                           </li>
                            </ul>
+
+                        <div class="border-top pt-3">
+                            <div class="d-flex justify-content-between small fw-bold mb-2">
+                                <span>Total Calorías:</span>
+                                <span>{{ menu.nutricion_total?.calorias?.toFixed(0) ?? 'N/A' }} kcal</span>
+                            </div>
+                            <div class="d-flex justify-content-between small fw-bold mb-3">
+                                <span>Costo Total:</span>
+                                <span class="text-danger">{{ formatCurrency(menu.nutricion_total?.costo_total) }}</span>
+                            </div>
+                        </div>
+
                         <div class="mt-auto">
                             <button class="btn btn-primary-nb w-100 btn-add-menu" @click="addMenuToProfile(menu.id)">
                                 <i class="fas fa-plus-circle me-2"></i> Agregar a Mis Loncheras
