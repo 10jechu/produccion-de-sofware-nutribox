@@ -6,6 +6,7 @@ from app.core.security import create_access_token
 from app.db.schemas.auth import Token, UserRegister
 from app.db.models.core_models import Rol, Membresia, Usuario
 from app.core.security import get_password_hash, verify_password
+from sqlalchemy.orm import joinedload
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -49,11 +50,28 @@ def register(payload: UserRegister, db: Session = Depends(get_db)):
     db.add(u); db.commit(); db.refresh(u)
     return {"id": u.id, "email": u.email}
 
-@router.post("/login", response_model=Token, summary="Login")
+router.post("/login", response_model=Token, summary="Login")
 def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = db.query(Usuario).filter_by(email=form.username).first()
+    user = db.query(Usuario).options(joinedload(Usuario.rol)).filter_by(email=form.username).first() # Asegura cargar el rol
     if not user or not verify_password(form.password, user.hash_password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Credenciales inválidas",
+            headers={"WWW-Authenticate": "Bearer"}, # Importante para OAuth2
+        )
+    if not user.activo: # Añadir verificación de usuario activo
+         raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Usuario inactivo",
+        )
 
-    access_token = create_access_token({"sub": str(user.id), "email": user.email})
+    # Prepara los datos para el token, incluyendo el rol
+    token_data = {
+        "sub": str(user.id),
+        "email": user.email,
+        "rol": user.rol.nombre if user.rol else "Usuario" # Incluye el rol
+    }
+    access_token = create_access_token(token_data)
+
+    # Devuelve el token como antes
     return {"access_token": access_token, "token_type": "bearer"}
