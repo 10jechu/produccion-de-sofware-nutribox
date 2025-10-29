@@ -9,7 +9,7 @@ from app.db.database import SessionLocal
 from app.db.models.core_models import Usuario
 from app.db.models.core_models import Rol
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login/")
 
 def get_current_user(token: str = Depends(oauth2_scheme)) -> Usuario:
     data = decode_token(token)
