@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+﻿from sqlalchemy.orm import Session
 from sqlalchemy import select
 from app.db.models.lunchbox import Lonchera, LoncheraAlimento
 from app.db.models.core_models import Hijo
@@ -6,10 +6,15 @@ from app.db.models.alimento import Alimento
 from app.db.models.address import Direccion
 from sqlalchemy import delete as sqlalchemy_delete
 
-def list_(db: Session, hijo_id: int | None = None) -> list[Lonchera]:
+# CORRECCIÓN CRÍTICA: Aceptar usuario_id y filtrar por el dueño del hijo.
+def list_(db: Session, hijo_id: int | None = None, usuario_id: int | None = None) -> list[Lonchera]:
     stmt = select(Lonchera)
     if hijo_id:
         stmt = stmt.where(Lonchera.hijo_id == hijo_id)
+    elif usuario_id:
+        # Permite filtrar por las loncheras asociadas a los hijos de un usuario (para Menús)
+        stmt = stmt.join(Hijo).where(Hijo.usuario_id == usuario_id)
+        
     return db.scalars(stmt).all()
 
 def get_by_id(db: Session, lonchera_id: int) -> Lonchera | None:
