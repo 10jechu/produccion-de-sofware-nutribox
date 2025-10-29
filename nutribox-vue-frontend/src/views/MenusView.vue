@@ -7,9 +7,10 @@ import authService from '@/services/auth.service';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
-const menus = ref([]); // Almacenará los detalles de las loncheras/menús
+const menus = ref([]); 
 const userData = ref(null);
 const isLoading = ref(true);
+const children = ref([]); // Lista de hijos del usuario
 
 // Verifica si el usuario tiene plan Estándar o superior para poder agregar menús
 const canAddMenu = computed(() => hasRequiredMembership('Estandar'));
@@ -18,37 +19,44 @@ function formatCurrency(value) {
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(value || 0);
 }
 
-// Función para cargar los menús desde el backend
-async function loadMenus() {
-    isLoading.value = true;
+async function loadInitialData() {
     userData.value = getUserDetail();
     if (!userData.value) {
         authService.logout();
         return;
     }
 
+    try {
+        // Cargar hijos del usuario actual para la lista de destino
+        const childrenList = await apiService.get('/children?usuario_id=' + userData.value.id);
+        children.value = childrenList;
+    } catch (error) {
+        console.error("Error cargando hijos:", error);
+    }
+}
+
+// Función para cargar los menús desde el backend
+async function loadMenus() {
+    isLoading.value = true;
+    
     if (!canAddMenu.value) {
         isLoading.value = false;
         return;
     }
 
     try {
-        // --- Lógica para obtener Menús ---
-        // Llamamos al endpoint que lista los Menús (que son loncheras del Admin)
          const baseMenus = await apiService.get('/menus');
-
-        // OBTENEMOS EL DETALLE COMPLETO (items, nutrición) para cada menú
+        
         const detailedMenusPromises = baseMenus.map(menu => 
-             apiService.get(`/lunchboxes/${menu.id}/detail`) // Obtiene detalle completo
+             apiService.get(`/lunchboxes/${menu.id}/detail`)
         );
         const detailedMenus = await Promise.all(detailedMenusPromises);
 
-        menus.value = detailedMenus; // Guarda los menús detallados
+        menus.value = detailedMenus;
         isLoading.value = false;
 
     } catch (error) {
         isLoading.value = false;
-        // Muestra un error más específico si falla la carga
         Swal.fire('Error', `No se pudieron cargar los menús predeterminados: ${error.message}`, 'error');
         menus.value = [];
     }
@@ -56,19 +64,57 @@ async function loadMenus() {
 
 // Función para copiar un menú a las loncheras del usuario
 async function addMenuToProfile(menuId) {
-    // Aquí iría la lógica para obtener el ID del hijo y el POST al endpoint de copia, 
-    // pero por simplicidad, usaremos un aviso de que la funcionalidad es Premium/Estándar
+    if (children.value.length === 0) {
+         Swal.fire('Advertencia', 'Debes tener al menos un hijo registrado para poder agregar un menú a tu perfil.', 'warning');
+         return;
+    }
+    
+    // Crear opciones para el select del hijo
+    const inputOptions = children.value.reduce((acc, child) => {
+        acc[child.id] = child.nombre;
+        return acc;
+    }, {});
 
-    Swal.fire({
-        icon: 'info',
-        title: 'Funcionalidad en Implementación',
-        text: 'La función de copiar menús se implementará en la siguiente iteración de desarrollo.',
-        confirmButtonColor: '#4CAF50'
+    const { value: targetHijoId } = await Swal.fire({
+        title: 'Selecciona el Hijo',
+        text: '¿A qué hijo deseas asignar este menú?',
+        input: 'select',
+        inputOptions: inputOptions,
+        inputPlaceholder: 'Selecciona un hijo',
+        showCancelButton: true,
+        confirmButtonText: 'Copiar Menú'
     });
+
+    if (targetHijoId) {
+        try {
+            Swal.showLoading();
+
+            await apiService.post(`/lunchboxes/${menuId}/copy`, {
+                target_hijo_id: parseInt(targetHijoId)
+            });
+
+            Swal.close();
+            Swal.fire({
+                icon: 'success',
+                title: '¡Menú Agregado!',
+                text: 'El menú se ha copiado como una nueva lonchera en estado "Borrador".',
+                timer: 2500,
+                showConfirmButton: false
+            });
+
+            setTimeout(() => {
+                 router.push('/mis-loncheras');
+            }, 1500);
+
+        } catch (error) {
+            Swal.close();
+            Swal.fire('Error', error.message || 'Error al copiar menú.', 'error');
+        }
+    }
 }
 
-// Carga los menús cuando el componente se monta
 onMounted(() => {
+    loadInitialData();
     loadMenus();
 });
 
@@ -76,11 +122,6 @@ onMounted(() => {
 
 <template>
     <main class="flex-grow-1 p-4 bg-light">
-        <div class="dashboard-header mb-4">
-            <h1 class="h3">Menús Predeterminados</h1>
-            <p class="text-muted">Explora nuestras loncheras recomendadas y agrégalas a tu plan.</p>
-        </div>
-
         <div v-if="!canAddMenu && !isLoading" class="card p-5 text-center card-shadow border-warning">
             <i class="fas fa-lock text-warning mb-3" style="font-size: 48px;"></i>
             <h3 class="h4">Función de Plan Estándar o Premium</h3>
@@ -112,7 +153,7 @@ onMounted(() => {
                              <h5 class="card-title fw-bold mb-0">{{ menu.estado }}</h5>
                         </div>
                         <p class="card-text text-muted small mb-3">
-                            {{ menu.alertas?.length > 0 ? menu.alertas[0].replace('⚠️ ', 'Descripción: ') : 'Descripción no disponible' }}
+                            {{ menu.alertas?.length > 0 ? menu.alertas[0].replace('⚠️ ', 'Descripción: ') : 'Una selección balanceada con aprox. ' + menu.nutricion_total?.calorias?.toFixed(0) + ' kcal.' }}
                         </p>
                         
                         <h6 class="fw-bold small">Alimentos ({{ menu.items?.length ?? 0 }}):</h6>
@@ -149,12 +190,12 @@ onMounted(() => {
 <style scoped>
 .menu-card {
     transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-    border-left: 5px solid var(--nb-secondary, #66BB6A); /* Acento verde secundario */
+    border-left: 5px solid var(--nb-secondary, #66BB6A);
 }
 
 .menu-card:hover {
     transform: translateY(-5px);
-    box-shadow: var(--nb-shadow-medium); /* Sombra más pronunciada al pasar */
+    box-shadow: var(--nb-shadow-medium);
 }
 
 .card-title {

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+﻿from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.core.deps import get_db
 from app.db.schemas.lunchbox import (
@@ -8,12 +8,16 @@ from app.db.schemas.lunchbox import (
 from app.db.schemas.detail import LunchboxDetailFull
 from app.crud import lunchbox as crud
 from app.crud import detail as detail_crud
+from pydantic import BaseModel # Necesario para el payload de copia
 
 router = APIRouter(prefix="/lunchboxes", tags=["lunchboxes"])
 
+class LunchboxCopyPayload(BaseModel):
+    target_hijo_id: int
+
 @router.get("/", response_model=list[LoncheraRead], summary="Listar loncheras")
-def list_lunchboxes(hijo_id: int | None = None, db: Session = Depends(get_db)):
-    return crud.list_(db, hijo_id=hijo_id)
+def list_lunchboxes(hijo_id: int | None = None, usuario_id: int | None = None, db: Session = Depends(get_db)):
+    return crud.list_(db, hijo_id=hijo_id, usuario_id=usuario_id)
 
 @router.get("/{lunchbox_id}", response_model=LoncheraRead, summary="Obtener una lonchera")
 def get_lunchbox(lunchbox_id: int, db: Session = Depends(get_db)):
@@ -38,6 +42,16 @@ def create_lunchbox(payload: LoncheraCreate, db: Session = Depends(get_db)):
         return crud.create(db, payload)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/{lunchbox_id}/copy", response_model=LoncheraRead, status_code=status.HTTP_201_CREATED, summary="Copiar menú como borrador (Estándar/Premium)")
+def copy_lunchbox_endpoint(lunchbox_id: int, payload: LunchboxCopyPayload, db: Session = Depends(get_db)):
+    try:
+        return crud.copy_lunchbox(db, lunchbox_id, payload.target_hijo_id)
+    except LookupError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
 
 @router.patch("/{lunchbox_id}", response_model=LoncheraRead, summary="Actualizar lonchera")
 def update_lunchbox(lunchbox_id: int, payload: LoncheraUpdate, db: Session = Depends(get_db)):
@@ -76,7 +90,7 @@ def remove_item(lunchbox_id: int, alimento_id: int, db: Session = Depends(get_db
 def delete_lunchbox(lunchbox_id: int, db: Session = Depends(get_db)):
     """Elimina una lonchera y sus items asociados."""
     try:
-        crud.delete(db, lunchbox_id) # Necesitamos crear crud.delete en app/crud/lunchbox.py
+        crud.delete(db, lunchbox_id)
         return
     except LookupError as e:
         raise HTTPException(status_code=404, detail=str(e))

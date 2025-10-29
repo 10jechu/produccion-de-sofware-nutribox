@@ -5,17 +5,59 @@ from app.db.models.core_models import Hijo
 from app.db.models.alimento import Alimento
 from app.db.models.address import Direccion
 from sqlalchemy import delete as sqlalchemy_delete
+from datetime import date
 
-# CORRECCIÓN CRÍTICA: Aceptar usuario_id y filtrar por el dueño del hijo.
+# Función de list_ corregida (ya incluida)
 def list_(db: Session, hijo_id: int | None = None, usuario_id: int | None = None) -> list[Lonchera]:
     stmt = select(Lonchera)
     if hijo_id:
         stmt = stmt.where(Lonchera.hijo_id == hijo_id)
     elif usuario_id:
-        # Permite filtrar por las loncheras asociadas a los hijos de un usuario (para Menús)
         stmt = stmt.join(Hijo).where(Hijo.usuario_id == usuario_id)
-        
     return db.scalars(stmt).all()
+
+# --- NUEVA FUNCIÓN: COPIA DE LONCHERA ---
+def copy_lunchbox(db: Session, original_lunchbox_id: int, target_hijo_id: int) -> Lonchera:
+    original = db.get(Lonchera, original_lunchbox_id)
+    if not original:
+        raise LookupError("Menú original no encontrado")
+
+    target_hijo = db.get(Hijo, target_hijo_id)
+    if not target_hijo:
+        raise ValueError("Hijo de destino no encontrado")
+
+    # 1. Crear nueva Lonchera (Borrador)
+    new_lunchbox = Lonchera(
+        hijo_id=target_hijo_id,
+        fecha=date.today(),
+        estado="Borrador", # Siempre como borrador
+        direccion_id=None
+    )
+    db.add(new_lunchbox)
+    db.flush() # Obtener ID antes del commit
+
+    # 2. Copiar Ítems (LoncheraAlimento)
+    original_items = db.scalars(
+        select(LoncheraAlimento).where(LoncheraAlimento.lonchera_id == original_lunchbox_id)
+    ).all()
+
+    new_items = []
+    for item in original_items:
+        new_items.append(
+            LoncheraAlimento(
+                lonchera_id=new_lunchbox.id,
+                alimento_id=item.alimento_id,
+                cantidad=item.cantidad
+            )
+        )
+    
+    if new_items:
+        db.add_all(new_items)
+        
+    db.commit()
+    db.refresh(new_lunchbox)
+    return new_lunchbox
+# --- FIN NUEVA FUNCIÓN ---
 
 def get_by_id(db: Session, lonchera_id: int) -> Lonchera | None:
     return db.get(Lonchera, lonchera_id)
