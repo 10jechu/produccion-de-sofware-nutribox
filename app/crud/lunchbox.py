@@ -6,11 +6,18 @@ from app.db.models.alimento import Alimento
 from app.db.models.address import Direccion
 from sqlalchemy import delete as sqlalchemy_delete
 
-def list_(db: Session, hijo_id: int | None = None) -> list[Lonchera]:
+
+def list_(db: Session, hijo_id: int | None = None, es_predeterminada: bool | None = None) -> list[Lonchera]:
     stmt = select(Lonchera)
     if hijo_id:
         stmt = stmt.where(Lonchera.hijo_id == hijo_id)
+
+    # NUEVA LÓGICA DE FILTRO
+    if es_predeterminada is not None:
+        stmt = stmt.where(Lonchera.es_predeterminada == es_predeterminada)
+
     return db.scalars(stmt).all()
+
 
 def get_by_id(db: Session, lonchera_id: int) -> Lonchera | None:
     return db.get(Lonchera, lonchera_id)

@@ -1,5 +1,5 @@
 from datetime import date
-from sqlalchemy import Integer, String, Float, Date, ForeignKey, UniqueConstraint
+from sqlalchemy import Integer, String, Float, Date, ForeignKey, UniqueConstraint, Boolean # Importa Boolean
 from sqlalchemy.orm import Mapped, mapped_column
 from app.db.database import Base
 
@@ -10,6 +10,7 @@ class Lonchera(Base):
     fecha: Mapped[date] = mapped_column(Date, nullable=False)
     estado: Mapped[str] = mapped_column(String(20), default="Borrador")
     direccion_id: Mapped[int | None] = mapped_column(ForeignKey("direcciones.id"), index=True, nullable=True)
+    es_predeterminada: Mapped[bool] = mapped_column(Boolean, default=False)
 
 class LoncheraAlimento(Base):
     __tablename__ = "lonchera_alimento"

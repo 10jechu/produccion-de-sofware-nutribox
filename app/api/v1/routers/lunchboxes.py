@@ -12,8 +12,13 @@ from app.crud import detail as detail_crud
 router = APIRouter(prefix="/lunchboxes", tags=["lunchboxes"])
 
 @router.get("/", response_model=list[LoncheraRead], summary="Listar loncheras")
-def list_lunchboxes(hijo_id: int | None = None, db: Session = Depends(get_db)):
-    return crud.list_(db, hijo_id=hijo_id)
+def list_lunchboxes(
+    hijo_id: int | None = None,
+    es_predeterminada: bool | None = None, # <-- NUEVO PARÁMETRO
+    db: Session = Depends(get_db)
+):
+    # La función CRUD debe aceptar este nuevo parámetro
+    return crud.list_(db, hijo_id=hijo_id, es_predeterminada=es_predeterminada)
 
 @router.get("/{lunchbox_id}", response_model=LoncheraRead, summary="Obtener una lonchera")
 def get_lunchbox(lunchbox_id: int, db: Session = Depends(get_db)):
