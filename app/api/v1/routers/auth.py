@@ -50,7 +50,7 @@ def register(payload: UserRegister, db: Session = Depends(get_db)):
     db.add(u); db.commit(); db.refresh(u)
     return {"id": u.id, "email": u.email}
 
-router.post("/login", response_model=Token, summary="Login")
+router.post("/login/", response_model=Token, summary="Login")
 def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(Usuario).options(joinedload(Usuario.rol)).filter_by(email=form.username).first() # Asegura cargar el rol
     if not user or not verify_password(form.password, user.hash_password):
