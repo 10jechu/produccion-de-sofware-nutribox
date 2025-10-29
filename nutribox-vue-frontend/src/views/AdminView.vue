@@ -4,7 +4,7 @@ import Swal from 'sweetalert2';
 import apiService from '@/services/api.service';
 import { isAdmin } from '@/utils/user'; // Para verificar si realmente es Admin (doble chequeo)
 import authService from '@/services/auth.service'; // Para logout si falla
-import AppLayout from '@/components/AppLayout.vue'; // Asegura que se use el layout
+// ELIMINADO: import AppLayout from '@/components/AppLayout.vue';
 
 const foods = ref([]);
 const isLoading = ref(true);
@@ -39,7 +39,7 @@ async function loadFoods() {
     }
 }
 
-// --- MODAL PARA AGREGAR ALIMENTO (Igual que en AlimentosView) ---
+// --- MODAL PARA AGREGAR ALIMENTO ---
 const showAddFoodModal = async () => {
     const { value: formValues } = await Swal.fire({
         title: "Agregar Nuevo Alimento",
@@ -174,79 +174,76 @@ const toggleFoodStatus = async (food) => {
     }
 };
 
-
 onMounted(() => {
     loadFoods();
 });
 </script>
 
 <template>
-  <AppLayout>
-    <main class="flex-grow-1 p-4 bg-light">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h1 class="h3 text-danger">Panel de Administración - Alimentos</h1>
-                <p class="text-muted">Gestionar el catálogo completo de alimentos (CRUD).</p>
-            </div>
-            <button class="btn btn-primary-nb" @click="showAddFoodModal">
-                <i class="fas fa-plus me-1"></i> Agregar Alimento
-            </button>
-        </div>
+  <main class="flex-grow-1 p-4 bg-light">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+          <div>
+              <h1 class="h3 text-danger">Panel de Administración - Alimentos</h1>
+              <p class="text-muted">Gestionar el catálogo completo de alimentos (CRUD).</p>
+          </div>
+          <button class="btn btn-primary-nb" @click="showAddFoodModal">
+              <i class="fas fa-plus me-1"></i> Agregar Alimento
+          </button>
+      </div>
 
-        <div class="card p-4 card-shadow">
-            <div v-if="isLoading" class="text-center p-5">
-                <i class="fas fa-spinner fa-spin fa-2x text-primary-nb"></i>
-                <p class="mt-2 text-muted">Cargando alimentos...</p>
-            </div>
-            <div v-else class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Kcal</th>
-                            <th>Prot. (g)</th>
-                            <th>Carb. (g)</th>
-                            <th>Costo</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="food in foods" :key="food.id">
-                            <td>{{ food.nombre }}</td>
-                            <td>{{ food.kcal?.toFixed(1) }}</td>
-                            <td>{{ food.proteinas?.toFixed(1) }}</td>
-                            <td>{{ food.carbos?.toFixed(1) }}</td>
-                            <td>{{ formatCurrency(food.costo) }}</td>
-                            <td>
-                                <span :class="['badge', food.activo ? 'bg-success' : 'bg-danger']">
-                                    {{ food.activo ? 'Activo' : 'Inactivo' }}
-                                </span>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-warning me-1" @click="showEditFoodModal(food)" title="Editar Alimento">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button
-                                  :class="['btn', 'btn-sm', food.activo ? 'btn-outline-danger' : 'btn-outline-success']"
-                                  @click="toggleFoodStatus(food)"
-                                  :title="food.activo ? 'Desactivar Alimento' : 'Activar Alimento'">
-                                    <i :class="['fas', food.activo ? 'fa-toggle-off' : 'fa-toggle-on']"></i>
-                                </button>
-                            </td>
-                        </tr>
-                        <tr v-if="foods.length === 0">
-                             <td colspan="7" class="text-center text-muted py-4">
-                                No hay alimentos registrados. ¡Agrega el primero!
-                             </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </main>
-  </AppLayout>
-</template>
+      <div class="card p-4 card-shadow">
+          <div v-if="isLoading" class="text-center p-5">
+              <i class="fas fa-spinner fa-spin fa-2x text-primary-nb"></i>
+              <p class="mt-2 text-muted">Cargando alimentos...</p>
+          </div>
+          <div v-else class="table-responsive">
+              <table class="table table-hover align-middle">
+                  <thead>
+                      <tr>
+                          <th>Nombre</th>
+                          <th>Kcal</th>
+                          <th>Prot. (g)</th>
+                          <th>Carb. (g)</th>
+                          <th>Costo</th>
+                          <th>Estado</th>
+                          <th>Acciones</th>
+                      </tr>
+                  </thead>
+                  <tbody>
+                      <tr v-for="food in foods" :key="food.id">
+                          <td>{{ food.nombre }}</td>
+                          <td>{{ food.kcal?.toFixed(1) }}</td>
+                          <td>{{ food.proteinas?.toFixed(1) }}</td>
+                          <td>{{ food.carbos?.toFixed(1) }}</td>
+                          <td>{{ formatCurrency(food.costo) }}</td>
+                          <td>
+                              <span :class="['badge', food.activo ? 'bg-success' : 'bg-danger']">
+                                  {{ food.activo ? 'Activo' : 'Inactivo' }}
+                              </span>
+                          </td>
+                          <td>
+                              <button class="btn btn-sm btn-outline-warning me-1" @click="showEditFoodModal(food)" title="Editar Alimento">
+                                  <i class="fas fa-edit"></i>
+                              </button>
+                              <button
+                                :class="['btn', 'btn-sm', food.activo ? 'btn-outline-danger' : 'btn-outline-success']"
+                                @click="toggleFoodStatus(food)"
+                                :title="food.activo ? 'Desactivar Alimento' : 'Activar Alimento'">
+                                  <i :class="['fas', food.activo ? 'fa-toggle-off' : 'fa-toggle-on']"></i>
+                              </button>
+                          </td>
+                      </tr>
+                      <tr v-if="foods.length === 0">
+                           <td colspan="7" class="text-center text-muted py-4">
+                              No hay alimentos registrados. ¡Agrega el primero!
+                           </td>
+                      </tr>
+                  </tbody>
+              </table>
+          </div>
+      </div>
+  </main>
+  </template>
 
 <style scoped>
 /* Estilos específicos para esta vista si son necesarios */
