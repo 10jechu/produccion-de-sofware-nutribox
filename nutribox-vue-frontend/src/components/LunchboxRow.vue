@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { defineProps, defineEmits } from 'vue';
 
 const props = defineProps({
@@ -16,7 +16,8 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['view-detail', 'delete-lunchbox']);
+// MODIFICADO: Añadido 'confirm-lunchbox'
+const emit = defineEmits(['view-detail', 'delete-lunchbox', 'confirm-lunchbox']);
 
 const getBadgeClass = (estado) => {
     if (estado === "Confirmada") return "bg-success";
@@ -44,6 +45,14 @@ const getBadgeClass = (estado) => {
                 <span class="d-none d-md-inline"> Ver Detalle</span>
             </button>
 
+            <button 
+                v-if="lunchbox.estado === 'Borrador'"
+                class="btn btn-sm btn-success me-1" 
+                title="Confirmar Lonchera"
+                @click="emit('confirm-lunchbox', lunchbox.id)">
+                <i class="fas fa-check"></i>
+                <span class="d-none d-md-inline"> Confirmar</span>
+            </button>
             <button class="btn btn-sm btn-outline-danger" @click="emit('delete-lunchbox', lunchbox.id)">
                 <i class="fas fa-trash"></i>
             </button>

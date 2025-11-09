@@ -1,5 +1,6 @@
-from pydantic import BaseModel
+﻿from pydantic import BaseModel
 from datetime import date
+from typing import List
 
 class RolMini(BaseModel):
     id: int
@@ -91,3 +92,23 @@ class LunchboxDetailFull(BaseModel):
     direccion: DireccionMini | None
     nutricion_total: NutricionTotal
     alertas: list[str] = []
+
+# ### AÑADIDO: Schemas para Estadísticas Avanzadas ###
+class DailyStat(BaseModel):
+    fecha: str
+    calorias: float
+    proteinas: float
+    carbos: float
+    costo: float
+
+class MacroPct(BaseModel):
+    proteinas_pct: float
+    carbos_pct: float
+    # Nota: No incluimos grasas_pct porque el modelo Alimento no lo tiene
+
+class AdvancedStatsResponse(BaseModel):
+    hijo_id: int
+    hijo_nombre: str
+    consumo_diario: List[DailyStat]
+    macro_porcentajes: MacroPct
+# ### FIN DE LO AÑADIDO ###

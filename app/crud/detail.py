@@ -1,5 +1,5 @@
-from sqlalchemy.orm import Session
-from sqlalchemy import select, func
+﻿from sqlalchemy.orm import Session
+from sqlalchemy import select, func, and_
 from datetime import datetime, timedelta
 from app.db.models.core_models import Usuario, Rol, Membresia, Hijo
 from app.db.models.address import Direccion
@@ -194,4 +194,71 @@ def get_lunchbox_detail_full(db: Session, lunchbox_id: int) -> dict | None:
             "costo_total": round(total_cost, 2) # AÑADIMOS EL COSTO TOTAL
         },
         "alertas": alertas
+    }
+
+# ### AÑADIDO: Lógica de Estadísticas Avanzadas ###
+def get_advanced_statistics(db: Session, hijo_id: int) -> dict:
+    """
+    Calcula estadísticas avanzadas para un hijo, basado en loncheras
+    confirmadas o archivadas.
+    """
+    # 1. Verificar que el hijo exista
+    hijo = db.get(Hijo, hijo_id)
+    if not hijo:
+        raise ValueError("Hijo no encontrado")
+        
+    # 2. Definir el rango de fechas (ej. últimos 30 días)
+    fecha_limite = datetime.utcnow().date() - timedelta(days=30)
+
+    # 3. Query principal: Suma de nutrición por día
+    #    Solo contamos loncheras que NO estén en 'Borrador'
+    stmt = (
+        select(
+            Lonchera.fecha,
+            func.sum(Alimento.kcal * LoncheraAlimento.cantidad).label('total_kcal'),
+            func.sum(Alimento.proteinas * LoncheraAlimento.cantidad).label('total_proteinas'),
+            func.sum(Alimento.carbos * LoncheraAlimento.cantidad).label('total_carbos'),
+            func.sum(Alimento.costo * LoncheraAlimento.cantidad).label('total_costo')
+        )
+        .join(LoncheraAlimento, Lonchera.id == LoncheraAlimento.lonchera_id)
+        .join(Alimento, Alimento.id == LoncheraAlimento.alimento_id)
+        .where(
+            Lonchera.hijo_id == hijo_id,
+            Lonchera.estado.in_(['Confirmada', 'Archivada']), # ¡CLAVE!
+            Lonchera.fecha >= fecha_limite
+        )
+        .group_by(Lonchera.fecha)
+        .order_by(Lonchera.fecha.asc())
+    )
+    
+    consumo_diario_result = db.execute(stmt).all()
+    
+    # Formatear datos para el gráfico de líneas (consumo diario)
+    consumo_diario = [
+        {
+            "fecha": row.fecha.isoformat(),
+            "calorias": round(row.total_kcal or 0, 1),
+            "proteinas": round(row.total_proteinas or 0, 1),
+            "carbos": round(row.total_carbos or 0, 1),
+            "costo": round(row.total_costo or 0, 2)
+        }
+        for row in consumo_diario_result
+    ]
+
+    # 4. Query para totales de macronutrientes (gráfico de dona)
+    total_proteinas = sum(item['proteinas'] for item in consumo_diario)
+    total_carbos = sum(item['carbos'] for item in consumo_diario)
+    
+    total_macros = total_proteinas + total_carbos
+    
+    macro_porcentajes = {
+        "proteinas_pct": round((total_proteinas / total_macros) * 100, 1) if total_macros > 0 else 0,
+        "carbos_pct": round((total_carbos / total_macros) * 100, 1) if total_macros > 0 else 0,
+    }
+
+    return {
+        "hijo_id": hijo_id,
+        "hijo_nombre": hijo.nombre,
+        "consumo_diario": consumo_diario,
+        "macro_porcentajes": macro_porcentajes
     }

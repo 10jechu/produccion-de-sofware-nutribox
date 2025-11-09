@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, onMounted } from 'vue';
 import Swal from 'sweetalert2';
 import apiService from '@/services/api.service';
@@ -166,6 +166,42 @@ async function deleteLunchbox(id) {
     }
 }
 
+// ### AÑADIDO ###
+async function confirmLunchbox(id) {
+    const result = await Swal.fire({
+        title: "¿Confirmar Lonchera?",
+        text: "Una vez confirmada, la lonchera contará para tus estadísticas de consumo.",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#4CAF50',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Sí, confirmar',
+        cancelButtonText: 'Cancelar'
+    });
+
+    if (result.isConfirmed) {
+        try {
+            Swal.fire({ title: 'Confirmando...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            
+            // Llama a la API para actualizar solo el estado
+            await apiService.patch('/lunchboxes/' + id, {
+                estado: "Confirmada"
+            });
+            
+            Swal.close();
+            Swal.fire('¡Éxito!', 'Lonchera confirmada correctamente.', 'success');
+            
+            // Recarga la lista para actualizar el badge y ocultar el botón
+            loadLunchboxes(); 
+            
+        } catch (error) {
+            Swal.close();
+            Swal.fire('Error', error.message || 'Error al confirmar la lonchera', 'error');
+        }
+    }
+}
+// ### FIN AÑADIDO ###
+
 onMounted(() => {
     loadLunchboxes();
 });
@@ -211,6 +247,7 @@ onMounted(() => {
                             :formatDate="formatDate"
                             @view-detail="viewDetail"
                             @delete-lunchbox="deleteLunchbox"
+                            @confirm-lunchbox="confirmLunchbox" 
                         />
                     </tbody>
                 </table>
