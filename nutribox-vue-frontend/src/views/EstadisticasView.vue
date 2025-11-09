@@ -23,23 +23,23 @@ const colorAccent = '#2196F3';
 const colorLightGreen = 'rgba(76, 175, 80, 0.2)';
 
 // --- ### INICIO DE LA CORRECCIÓN ### ---
-// Esta función ahora lee desde localStorage, no llama a la API
-function loadHijosFromStorage() {
+// Esta función ahora llama a la API, igual que HijosView.vue
+async function loadHijos() {
   isLoadingData.value = true;
-  const user = getUserDetail(); // Carga el usuario completo desde localStorage
+  const user = getUserDetail(); // Solo para obtener el ID
   if (!user) { 
       authService.logout(); 
       return; 
   }
   
-  // La lista de hijos ya viene en el objeto 'user'
-  if (user.hijos && user.hijos.length > 0) {
-    hijos.value = user.hijos;
-  } else {
-    hijos.value = [];
-    console.warn("No se encontraron hijos en el UserDetail de localStorage.");
+  try {
+    // Llama a la API para obtener la lista FRESCA de hijos
+    hijos.value = await apiService.get('/children?usuario_id=' + user.id);
+    isLoadingData.value = false;
+  } catch (error) {
+    isLoadingData.value = false;
+    Swal.fire('Error', 'No se pudieron cargar los hijos', 'error');
   }
-  isLoadingData.value = false;
 }
 // --- ### FIN DE LA CORRECCIÓN ### ---
 
@@ -66,7 +66,7 @@ watch(selectedHijoId, fetchAndRenderStats);
 // --- Montaje inicial ---
 onMounted(() => {
     if (canViewAdvanced.value) {
-        loadHijosFromStorage(); // Llama a la nueva función corregida
+        loadHijos(); // Llama a la nueva función corregida
     }
 });
 
@@ -151,7 +151,7 @@ const renderCharts = (statsData) => {
                 <label for="hijoSelect" class="form-label fw-bold">Selecciona un Hijo para ver sus estadísticas</label>
                 <select id="hijoSelect" class="form-select" v-model="selectedHijoId" :disabled="isLoadingData">
                     <option :value="null" disabled>
-                        {{ isLoadingData ? 'Cargando...' : 'Selecciona un hijo' }}
+                        {{ isLoadingData ? 'Cargando hijos...' : 'Selecciona un hijo' }}
                     </option>
                     <option v-for="h in hijos" :key="h.id" :value="h.id">{{ h.nombre }}</option>
                 </select>
