@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, onMounted, computed } from 'vue';
 import Swal from 'sweetalert2';
 import apiService from '@/services/api.service';
@@ -21,6 +21,7 @@ const fetchHijos = async () => {
   try {
     const childrenList = await apiService.get('/children?usuario_id=' + userData.value.id);
     
+    // Obtenemos el detalle completo de cada hijo para sus estadísticas
     const childrenDetailsPromises = childrenList.map(hijo => 
       apiService.get('/children/' + hijo.id + '/detail')
     );
@@ -31,7 +32,8 @@ const fetchHijos = async () => {
         id: detail.id,
         nombre: detail.nombre,
         restricciones_count: detail.restricciones.length,
-        loncheras_activas: detail.loncheras_recientes.filter(l => l.estado !== 'Archivada').length
+        // Filtramos por estados activos
+        loncheras_activas: detail.loncheras_recientes.filter(l => l.estado === 'Borrador' || l.estado === 'Confirmada').length
     }));
     
     isLoading.value = false;
@@ -46,10 +48,10 @@ const showAddChildModal = async () => {
         title: "Agregar Hijo",
         input: "text",
         inputLabel: "Nombre del hijo",
-        inputPlaceholder: "Ej: Juan Perez",
+        inputPlaceholder: "Ej: Juan Pérez",
         showCancelButton: true,
-        confirmButtonColor: "#4CAF50",
-        cancelButtonColor: "#DC3545",
+        confirmButtonColor: "#1F8D45", // Usar primary
+        cancelButtonColor: "#E53935", // Usar danger
         confirmButtonText: "Agregar",
         cancelButtonText: "Cancelar",
         inputValidator: (value) => {
@@ -78,12 +80,12 @@ const showAddChildModal = async () => {
 
 const deleteHijo = async (id) => {
     const result = await Swal.fire({
-        title: "Eliminar hijo",
-        text: "Esta accion eliminara al hijo y todas sus loncheras asociadas.",
+        title: "¿Eliminar hijo?",
+        text: "Esta acción eliminará al hijo y todas sus loncheras asociadas. ¿Estás seguro?",
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#4CAF50',
-        cancelButtonColor: '#F44336',
+        confirmButtonColor: '#1F8D45',
+        cancelButtonColor: '#E53935',
         confirmButtonText: 'Si, eliminar',
         cancelButtonText: 'Cancelar'
     });
@@ -115,19 +117,19 @@ const viewHijoDetail = async (id) => {
             ? detail.restricciones.map(r => 
                 '<li class="list-group-item d-flex justify-content-between align-items-start py-1 px-0">' + r.tipo.toUpperCase() + ': ' + (r.alimento_nombre || r.texto) + '</li>'
               ).join("")
-            : '<li class="list-group-item text-muted px-0">Sin restricciones registradas.</li>';
+            : '<li class="list-group-item text-muted-dark px-0">Sin restricciones registradas.</li>';
         
         const swalHtml = 
                 '<div class="text-start">' +
                     '<h5 class="mt-3">Restricciones (' + detail.restricciones.length + '): ' +
-                        '<a href="/restricciones?hijoId=' + detail.id + '" class="small badge bg-primary-nb text-white text-decoration-none">Gestionar Restricciones</a>' +
+                        '<router-link to="/app/restricciones?hijoId=' + detail.id + '" class="small badge bg-primary-nb text-white text-decoration-none">Gestionar Restricciones</router-link>' +
                     '</h5>' +
                     '<ul class="list-group list-group-flush border-top border-bottom">' + restriccionesList + '</ul>' +
                     
-                    '<h5 class="mt-4">Estadisticas:</h5>' +
+                    '<h5 class="mt-4">Estadísticas:</h5>' +
                     '<ul class="list-unstyled mb-0">' +
                         '<li><strong>Total de Loncheras:</strong> ' + detail.estadisticas.total_loncheras + '</li>' +
-                        '<li><strong>Promedio de Calorias:</strong> <span class="badge bg-success">' + detail.estadisticas.promedio_calorias + ' kcal</span></li>' +
+                        '<li><strong>Promedio de Calorías:</strong> <span class="badge bg-success">' + detail.estadisticas.promedio_calorias + ' kcal</span></li>' +
                     '</ul>' +
                 '</div>';
         
@@ -135,7 +137,7 @@ const viewHijoDetail = async (id) => {
             title: detail.nombre,
             html: swalHtml,
             width: 600,
-            confirmButtonColor: "#4CAF50"
+            confirmButtonColor: "#1F8D45" // Usar primary
         });
     } catch (error) {
         Swal.close();
@@ -149,28 +151,28 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="flex-grow-1 p-4 bg-light">
+  <main class="flex-grow-1 p-4 bg-light-nb">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="h3">Mis Hijos</h1>
-            <p class="text-muted">Gestiona la informacion de tus hijos</p>
+            <h1 class="h3 text-dark-nb">Mis Hijos</h1>
+            <p class="text-muted-dark">Gestiona la información de tus hijos</p>
         </div>
         <button class="btn btn-primary-nb" @click="showAddChildModal">
             <i class="fas fa-plus me-1"></i> Agregar Hijo
         </button>
     </div>
 
-    <div v-if="isLoading" class="text-center p-5">
+    <div v-if="isLoading" class="text-center p-5 bg-light-nb">
       <i class="fas fa-spinner fa-spin fa-2x text-primary-nb"></i>
-      <p class="mt-2 text-muted">Cargando hijos...</p>
+      <p class="mt-2 text-muted-dark">Cargando hijos...</p>
     </div>
 
     <div v-else-if="hijos.length === 0" class="row g-4">
       <div class="col-12">
         <div class="card p-5 text-center card-shadow">
           <i class="fas fa-child text-primary-nb mb-3" style="font-size: 48px;"></i>
-          <h3 class="h4">No tienes hijos registrados</h3>
-          <p class="text-muted mb-4">Comienza agregando tu primer hijo</p>
+          <h3 class="h4 text-dark-nb">No tienes hijos registrados</h3>
+          <p class="text-muted-dark mb-4">Comienza agregando tu primer hijo</p>
           <button class="btn btn-primary-nb w-auto mx-auto" @click="showAddChildModal">
             <i class="fas fa-plus me-1"></i> Agregar Hijo
           </button>

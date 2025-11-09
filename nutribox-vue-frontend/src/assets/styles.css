@@ -39,7 +39,7 @@ body {
 .sticky-top {
     position: sticky;
     top: 0;
-    z-index: 1020; /* Alto z-index para asegurar que esté por encima de todo */
+    z-index: 1020;
 }
 
 
@@ -52,7 +52,7 @@ body {
 .bg-light-nb { background-color: var(--bg-light) !important; }
 .bg-card { background-color: var(--bg-card) !important; }
 
-/* Botones y Hover */
+
 .btn-primary-nb { 
     background-color: var(--primary) !important; 
     border-color: var(--primary) !important; 
@@ -116,7 +116,7 @@ body {
     border-radius: 0.75rem; 
     transition: all 0.3s ease;
 }
-.card-shadow:hover { 
+.card-shadow:hover, .plan-card:hover:not(.premium) { 
     transform: translateY(-3px);
     box-shadow: var(--shadow-lg);
 }
@@ -124,51 +124,113 @@ body {
     color: var(--primary-dark) !important;
 }
 
+/* ------------------- HERO FULL-SCREEN ------------------- */
+.hero-full {
+    background: var(--bg-hero);
+    color: var(--text-dark); 
+    min-height: 45vh; 
+    display: flex;
+    align-items: center;
+    padding: 3rem 0;
+    border-bottom: 5px solid var(--primary-light);
+}
+.hero-full h1 {
+    font-weight: 900;
+    font-size: 3rem; 
+    line-height: 1.1;
+    color: var(--primary-dark);
+}
+.hero-full p.lead {
+    font-size: 1.2rem;
+    color: var(--nb-text-muted);
+}
+.lonchera-visual {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 60%);
+    border: 3px solid var(--primary-light);
+    border-radius: 1rem;
+    padding: 2rem;
+    height: 200px;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3rem; 
+    color: white;
+    box-shadow: var(--shadow-lg);
+}
+
+/* ------------------- Sección de Características (FEATURE CARDS) ------------------- */
+.feature-card-modern {
+    background-color: var(--bg-card);
+    border: 1px solid var(--nb-border-medium); 
+    transition: all 0.3s ease;
+    border-radius: 0.75rem;
+    text-align: center;
+    padding: 2.5rem 1.5rem; /* Más padding vertical para centrar mejor */
+    box-shadow: var(--shadow-sm); 
+}
+.feature-card-modern:hover {
+     transform: translateY(-5px); /* Más interactividad */
+}
+.feature-icon-modern {
+    font-size: 3.5rem; /* Icono más grande */
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+.feature-card-modern p.small-desc {
+    font-size: 0.9rem; /* Texto de descripción más pequeño */
+}
+
+/* ------------------- Sección de Planes ------------------- */
+.plan-card {
+    background-color: var(--bg-card);
+    border: 1px solid var(--nb-border-medium);
+    transition: all 0.3s ease;
+    border-radius: 0.75rem;
+    padding: 2rem;
+}
+.plan-card.premium {
+    border: 3px solid var(--secondary) !important;
+    transform: scale(1.05); 
+    box-shadow: 0 15px 30px rgba(249, 199, 79, 0.5);
+    z-index: 2; 
+}
+
+/* ------------------- CTA Final (Fondo Oscuro para Contraste) ------------------- */
+.cta-final {
+    background-color: var(--primary-dark) !important;
+    color: white !important;
+}
 
 /* ------------------- DASHBOARD Y VISTAS INTERNAS ------------------- */
-
-/* Contenedor principal de las métricas (lo haremos interactivo) */
+.stat-icon {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem; 
+  border-radius: 50%;
+}
 .stat-card-link {
     display: block;
     text-decoration: none;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 .stat-card-link:hover .card {
-    transform: translateY(-5px); /* Más énfasis en el hover */
+    transform: translateY(-5px); 
     box-shadow: var(--shadow-xl);
+    cursor: pointer;
 }
-
-/* Iconos de las estadísticas del dashboard (Más grandes y redondeados) */
-.stat-icon {
-    width: 60px;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 2.5rem !important;
-    border-radius: 50%; /* Circular */
+.card-shadow-top {
+    box-shadow: var(--shadow-md); 
+    border: 1px solid var(--nb-border-medium);
+    background-color: var(--bg-card); 
+    border-radius: 0.75rem; 
 }
-
-/* Estilo para el botón de Admin */
-.btn-primary-dark {
-     background-color: var(--primary-dark) !important;
-     border-color: var(--primary-dark) !important;
-     color: white !important;
+.card-shadow-top:hover {
+     box-shadow: var(--shadow-lg); 
 }
-.btn-primary-dark:hover {
-     background-color: var(--primary) !important;
-}
-
-/* Estilos de Badges para membresías (para la tarjeta de info) */
-.badge.bg-secondary {
-    background-color: var(--secondary) !important;
-    color: var(--text-dark) !important;
-}
-.badge.bg-accent {
-    background-color: var(--accent) !important;
-}
-
-
-/* ------------------- Footer ------------------- */
 footer {
     background-color: var(--primary-dark) !important;
     color: white;

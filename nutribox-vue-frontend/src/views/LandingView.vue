@@ -52,24 +52,24 @@ import { RouterLink } from 'vue-router';
             <h2 class="text-center mb-5 fw-bold text-dark-nb">¿Por qué elegir NutriBox?</h2>
             <div class="row row-cols-1 row-cols-md-3 g-4">
                 <div class="col">
-                    <div class="card h-100 feature-card-modern">
+                    <div class="card h-100 feature-card-modern card-shadow">
                         <div class="feature-icon-modern"><i class="fas fa-chart-pie"></i></div>
                         <h3 class="h5 fw-bold text-dark-nb">Análisis Nutricional Detallado</h3>
-                        <p class="text-muted-dark">Evalúa nutrientes esenciales y personaliza loncheras cada día. (RF3.5)</p>
+                        <p class="text-muted-dark small-desc">Evalúa nutrientes esenciales y personaliza loncheras cada día. (RF3.5)</p>
                     </div>
                 </div>
                 <div class="col">
-                    <div class="card h-100 feature-card-modern">
+                    <div class="card h-100 feature-card-modern card-shadow">
                         <div class="feature-icon-modern"><i class="fas fa-exclamation-triangle"></i></div>
                         <h3 class="h5 fw-bold text-dark-nb">Alertas de Restricciones</h3>
-                        <p class="text-muted-dark">Toda la familia puede agregar restricciones específicas para prevenir alergias. (RF4)</p>
+                        <p class="text-muted-dark small-desc">Toda la familia puede agregar restricciones específicas para prevenir alergias. (RF4)</p>
                     </div>
                 </div>
                 <div class="col">
-                    <div class="card h-100 feature-card-modern">
+                    <div class="card h-100 feature-card-modern card-shadow">
                         <div class="feature-icon-modern"><i class="fas fa-history"></i></div>
                         <h3 class="h5 fw-bold text-dark-nb">Ahorro y Planificación</h3>
-                        <p class="text-muted-dark">Simplifica la planificación semanal y optimiza el presupuesto familiar. (RF7)</p>
+                        <p class="text-muted-dark small-desc">Simplifica la planificación semanal y optimiza el presupuesto familiar. (RF7)</p>
                     </div>
                 </div>
             </div>

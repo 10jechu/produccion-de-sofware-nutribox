@@ -1,4 +1,4 @@
-// src/services/api.service.js
+﻿// src/services/api.service.js
 
 // Obtener la URL base de las variables de entorno de Vite
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1'; // URL por defecto si no esta definida
@@ -38,11 +38,16 @@ const prepareEndpoint = (endpoint) => {
     const startsWithSlash = finalEndpoint.startsWith('/');
     const endsWithSlash = finalEndpoint.endsWith('/');
     
+    // Si contiene query params, NO añadimos slash al final
+    if (finalEndpoint.includes('?')) {
+        return finalEndpoint;
+    }
+    
     // Garantizar el slash inicial
     finalEndpoint = startsWithSlash ? finalEndpoint : '/' + finalEndpoint;
     
-    // Garantizar el slash final si no hay query params y no termina en slash
-    if (finalEndpoint.length > 1 && !endsWithSlash && !finalEndpoint.includes('?')) {
+    // Garantizar el slash final 
+    if (finalEndpoint.length > 1 && !endsWithSlash) {
         finalEndpoint = finalEndpoint + '/';
     }
     
@@ -55,7 +60,7 @@ const apiService = {
     const finalEndpoint = prepareEndpoint(endpoint);
     let url = API_BASE_URL + finalEndpoint; // CONCATENACION
     if (params) {
-      url += '?' + (new URLSearchParams(params).toString()); // CONCATENACION
+      url += (finalEndpoint.includes('?') ? '&' : '?') + (new URLSearchParams(params).toString()); // CORRECCION: manejo de params
     }
     const response = await fetch(url, {
       method: 'GET',

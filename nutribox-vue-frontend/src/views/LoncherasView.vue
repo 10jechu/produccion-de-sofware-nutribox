@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, onMounted } from 'vue';
 import Swal from 'sweetalert2';
 import apiService from '@/services/api.service';
@@ -11,9 +11,9 @@ const hijos = ref([]);
 const isLoading = ref(true);
 
 function getBadgeClass(estado) {
-    if (estado === "Confirmada") return "bg-success";
-    if (estado === "Borrador") return "bg-warning text-dark";
-    return "bg-secondary";
+    if (estado === "Confirmada") return "bg-primary-nb text-white";
+    if (estado === "Borrador") return "bg-secondary text-dark-nb";
+    return "bg-muted-dark text-white";
 }
 
 function formatCurrency(value) {
@@ -42,12 +42,14 @@ async function loadLunchboxes() {
     }
 
     try {
+        // Obtenemos todas las loncheras del usuario actual (no solo las del admin/menus)
         const [baseLunchboxes, childrenList] = await Promise.all([
-            apiService.get('/lunchboxes'),
+            apiService.get('/lunchboxes?usuario_id=' + user.id),
             apiService.get('/children?usuario_id=' + user.id)
         ]);
         hijos.value = childrenList;
         
+        // Obtenemos el detalle completo de cada lonchera (nutrición, items, costo)
         const detailedLunchboxesPromises = baseLunchboxes.map(lb => 
             apiService.get('/lunchboxes/' + lb.id + '/detail')
         );
@@ -77,35 +79,33 @@ async function viewDetail(id) {
         const itemsList = detail.items.map(item => 
             '<li class="list-group-item d-flex justify-content-between align-items-center">' +
                 '<span>' + item.nombre + '</span>' + 
-                '<span class="badge bg-light text-dark">' + item.cantidad + 'x - ' + item.kcal.toFixed(0) + ' kcal / ' + formatCurrency(item.costo) + '</span>' + 
+                '<span class="badge bg-primary-light text-dark-nb">' + item.cantidad + 'x - ' + item.kcal.toFixed(0) + ' kcal / ' + formatCurrency(item.costo) + '</span>' + 
              '</li>'
         ).join("");
         
         const alertasHtml = detail.alertas.map(a => 
-            // CORRECCION: Concatenacion simple en HTML de alertas
-            '<div class="alert ' + (a.includes("ALERGIA") ? "alert-danger" : "alert-warning") + ' p-2 mt-2 mb-0" role="alert">' +
+            '<div class="alert ' + (a.includes("ALERGIA") ? "alert-danger" : "alert-warning") + ' p-2 mt-2 mb-0 fw-bold" role="alert">' +
                 '<i class="fas fa-exclamation-triangle me-1"></i> ' + a + 
             '</div>'
         ).join("");
 
-        // CORRECCION: Usamos un string simple y concatenado para todo el HTML.
         const swalHtml = 
              alertasHtml +
              '<div class="text-start mt-3">' +
-                 '<h5 class="mb-3 border-bottom pb-2">Informacion General</h5>' +
-                 '<div class="row">' +
+                 '<h5 class="mb-3 border-bottom pb-2 text-dark-nb">Información General</h5>' +
+                 '<div class="row text-dark-nb">' +
                      '<div class="col-6 mb-2"><strong>Fecha:</strong> ' + formatDate(detail.fecha) + '</div>' +
                      '<div class="col-6 mb-2"><strong>Estado:</strong> <span class="badge ' + getBadgeClass(detail.estado) + '">' + detail.estado + '</span></div>' +
-                     '<div class="col-12 mb-2"><strong>Entrega:</strong> ' + (detail.direccion ? detail.direccion.etiqueta + " - " + detail.direccion.direccion : "Sin direccion de envio") + '</div>' +
+                     '<div class="col-12 mb-2"><strong>Entrega:</strong> ' + (detail.direccion ? detail.direccion.etiqueta + " - " + detail.direccion.direccion : "Sin dirección de envío") + '</div>' +
                  '</div>' +
                  
-                 '<h5 class="mt-4 mb-2 border-bottom pb-2">Alimentos (' + detail.items.length + ')</h5>' +
+                 '<h5 class="mt-4 mb-2 border-bottom pb-2 text-dark-nb">Alimentos (' + detail.items.length + ')</h5>' +
                  '<ul class="list-group list-group-flush">' + itemsList + '</ul>' +
                  
-                 '<h5 class="mt-4 mb-2 border-bottom pb-2">Nutricion y Costo (RF3.5)</h5>' +
-                 '<ul class="list-group list-group-flush">' +
-                     '<li class="list-group-item d-flex justify-content-between px-0">Calorias: <strong class="text-danger">' + detail.nutricion_total.calorias.toFixed(1) + ' kcal</strong></li>' +
-                     '<li class="list-group-item d-flex justify-content-between px-0">Proteinas: <strong>' + detail.nutricion_total.proteinas.toFixed(1) + ' g</strong></li>' +
+                 '<h5 class="mt-4 mb-2 border-bottom pb-2 text-dark-nb">Nutrición y Costo</h5>' +
+                 '<ul class="list-group list-group-flush text-dark-nb">' +
+                     '<li class="list-group-item d-flex justify-content-between px-0">Calorías: <strong class="text-danger">' + detail.nutricion_total.calorias.toFixed(1) + ' kcal</strong></li>' +
+                     '<li class="list-group-item d-flex justify-content-between px-0">Proteínas: <strong>' + detail.nutricion_total.proteinas.toFixed(1) + ' g</strong></li>' +
                      '<li class="list-group-item d-flex justify-content-between px-0">Carbohidratos: <strong>' + detail.nutricion_total.carbohidratos.toFixed(1) + ' g</strong></li>' +
                      '<li class="list-group-item d-flex justify-content-between px-0">Costo Total: <strong>' + formatCurrency(detail.nutricion_total.costo_total) + '</strong></li>' +
                  '</ul>' +
@@ -115,7 +115,7 @@ async function viewDetail(id) {
             title: 'Lonchera para ' + detail.hijo_nombre,
             html: swalHtml,
             width: 600,
-            confirmButtonColor: "#4CAF50"
+            confirmButtonColor: "#1F8D45"
         });
     } catch (error) {
         Swal.fire('Error', 'No se pudo cargar el detalle', 'error');
@@ -125,12 +125,12 @@ async function viewDetail(id) {
 async function deleteLunchbox(id) {
     const result = await Swal.fire({
         title: "¿Eliminar Lonchera?",
-        text: "Esta accion eliminara la lonchera y todos sus alimentos asociados de forma permanente.",
+        text: "Esta acción eliminará la lonchera y todos sus alimentos asociados de forma permanente.",
         icon: 'warning',
         showCancelButton: true,
-        confirmButtonColor: '#4CAF50',
-        cancelButtonColor: '#F44336',
-        confirmButtonText: 'Si, eliminar',
+        confirmButtonColor: '#1F8D45',
+        cancelButtonColor: '#E53935',
+        confirmButtonText: 'Sí, eliminar',
         cancelButtonText: 'Cancelar'
     });
 
@@ -139,7 +139,7 @@ async function deleteLunchbox(id) {
             Swal.showLoading();
             await apiService.delete('/lunchboxes/' + id);
             Swal.close();
-            Swal.fire('Exito', 'Lonchera eliminada correctamente', 'success');
+            Swal.fire('Éxito', 'Lonchera eliminada correctamente', 'success');
             loadLunchboxes(); 
         } catch (error) {
             Swal.close();
@@ -155,31 +155,32 @@ onMounted(() => {
 </script>
 
 <template>
-    <main class="flex-grow-1 p-4 bg-light">
+    <main class="flex-grow-1 p-4 bg-light-nb">
         <div class="dashboard-header mb-4">
-            <h1 class="h3">Mis Loncheras</h1>
-            <p class="text-muted">Historial de todas tus loncheras</p>
+            <h1 class="h3 text-dark-nb">Mis Loncheras</h1>
+            <p class="text-muted-dark">Historial de todas tus loncheras</p>
         </div>
 
         <div class="card p-4 card-shadow">
-            <div v-if="isLoading" class="text-center p-5">
+            <div v-if="isLoading" class="text-center p-5 bg-card">
                 <i class="fas fa-spinner fa-spin fa-2x text-primary-nb"></i>
-                <p class="mt-2 text-muted">Cargando loncheras...</p>
+                <p class="mt-2 text-muted-dark">Cargando loncheras...</p>
             </div>
             
-            <div v-else-if="lunchboxes.length === 0" class="text-center p-5 text-muted">
+            <div v-else-if="lunchboxes.length === 0" class="text-center p-5 text-muted-dark bg-card">
                  No hay loncheras registradas
+                 <router-link to="/app/crear-lonchera" class="btn btn-primary-nb mt-3">Crear la primera Lonchera</router-link>
             </div>
 
             <div v-else class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
+                <table class="table table-hover align-middle">
+                    <thead class="bg-light-nb">
                         <tr>
                             <th>Fecha</th>
                             <th>Hijo</th>
                             <th>Estado</th>
                             <th>Items</th>
-                            <th>Calorias</th>
+                            <th>Calorías</th>
                             <th>Costo</th>
                             <th>Acciones</th>
                         </tr>

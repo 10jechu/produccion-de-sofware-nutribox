@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, onMounted, computed, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import Swal from 'sweetalert2';
@@ -21,9 +21,12 @@ const selectedFoods = ref([]);
 const searchTerm = ref('');
 
 const hijoId = ref(null);
-const fecha = ref(new Date().toISOString().split("T")[0]);
+// Establece la fecha mínima de hoy
+const minDate = new Date().toISOString().split("T")[0]; 
+const fecha = ref(minDate); 
 const direccionId = ref(null);
 
+// Lógica de permisos
 const canPersonalize = hasRequiredMembership('Premium'); 
 const canCreate = hasRequiredMembership('Estandar'); 
 
@@ -52,6 +55,7 @@ const totalCosto = computed(() => {
 const alertas = computed(() => {
     const alerts = [];
     
+    // 1. Alergias Críticas (ROJO)
     restricciones.value
         .filter(r => r.tipo === "alergia" && r.alimento_id)
         .forEach(r => {
@@ -59,12 +63,13 @@ const alertas = computed(() => {
                 const alimentoAlergico = foods.value.find(f => f.id === r.alimento_id)?.nombre || "Alimento prohibido";
                 alerts.push({
                     type: 'danger',
-                    message: 'ALERGIA CRITICA: Contiene ' + alimentoAlergico + '.',
+                    message: 'ALERGIA CRÍTICA: Contiene ' + alimentoAlergico + '.',
                     isCritical: true
                 });
             }
         });
 
+    // 2. Prohibidos por Texto (AMARILLO/NARANJA)
     const textosProhibidos = restricciones.value
         .filter(r => r.tipo === "prohibido" && r.texto)
         .map(r => r.texto.toLowerCase());
@@ -73,12 +78,13 @@ const alertas = computed(() => {
         if (textosProhibidos.some(t => f.nombre.toLowerCase().includes(t))) {
             alerts.push({
                 type: 'warning',
-                message: 'Advertencia: El alimento ' + f.nombre + ' podria contener ingredientes prohibidos.',
+                message: 'ADVERTENCIA: El alimento ' + f.nombre + ' podría contener ingredientes prohibidos (' + textosProhibidos.join(', ') + ').',
                 isCritical: false
             });
         }
     });
 
+    // 3. Alertas Nutricionales (INFO)
     if (totalCalorias.value > 500) {
         alerts.push({
             type: 'info',
@@ -88,7 +94,7 @@ const alertas = computed(() => {
     } else if (totalCalorias.value < 200 && totalCalorias.value > 0) {
         alerts.push({
             type: 'info',
-            message: 'Bajo contenido calorico (menos de 200 kcal).',
+            message: 'Bajo contenido calórico (menos de 200 kcal).',
             isCritical: false
         });
     }
@@ -97,6 +103,7 @@ const alertas = computed(() => {
 });
 
 const formatCurrency = (value) => {
+    // Usar el estilo local colombiano
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(value);
 };
 
@@ -105,8 +112,13 @@ const loadChildRestrictions = async () => {
         restricciones.value = [];
         return;
     }
+    // Si no es premium, no cargamos restricciones
+    if (!hasRequiredMembership('Premium')) return;
+
     try {
-        restricciones.value = await apiService.get('/restrictions?hijo_id=' + hijoId.value);
+        // Obtenemos el detalle del hijo, incluyendo restricciones, para la validación interna
+        const detail = await apiService.get('/children/' + hijoId.value + '/detail');
+        restricciones.value = detail.restricciones || [];
     } catch (error) {
         restricciones.value = [];
         console.error("Error al cargar restricciones:", error);
@@ -117,6 +129,10 @@ watch(hijoId, loadChildRestrictions);
 
 
 const addFood = (foodId) => {
+    if (!canPersonalize.value) {
+        Swal.fire('Función Premium', 'La adición de alimentos individuales requiere el Plan Premium.', 'warning');
+        return;
+    }
     const food = foods.value.find(f => f.id === foodId);
     if (!food) return;
     
@@ -148,22 +164,28 @@ const updateQuantity = (foodId, cantidad) => {
 };
 
 const createLunchbox = async () => {
+    if (!canCreate.value) {
+         Swal.fire('Plan Requerido', 'Necesitas el Plan Estándar o Premium para crear una lonchera.', 'warning');
+        return;
+    }
+
     if (!hijoId.value || !fecha.value || selectedFoods.value.length === 0) {
         Swal.fire('Error', 'Debes completar Hijo, Fecha y agregar alimentos', 'warning');
         return;
     }
     
+    // Alerta crítica de alergia antes de crear
     const tieneAlergiaCritica = alertas.value.some(a => a.isCritical);
 
     if (tieneAlergiaCritica) {
         const result = await Swal.fire({
-            title: "�ALERTA CRITICA!",
-            text: "Esta lonchera contiene un alimento que causa ALERGIA grave al ni�o. �Deseas continuar bajo tu responsabilidad?",
+            title: "¡ALERTA CRÍTICA!",
+            text: "Esta lonchera contiene un alimento que causa ALERGIA grave al niño. ¿Deseas continuar bajo tu responsabilidad?",
             icon: 'error',
             showCancelButton: true,
-            confirmButtonColor: '#4CAF50',
-            cancelButtonColor: '#F44336',
-            confirmButtonText: 'Si, continuar',
+            confirmButtonColor: '#1F8D45', // primary
+            cancelButtonColor: '#E53935', // danger
+            confirmButtonText: 'Sí, continuar',
             cancelButtonText: 'Cancelar'
         });
         if (!result.isConfirmed) {
@@ -174,13 +196,15 @@ const createLunchbox = async () => {
     try {
         Swal.showLoading();
         
+        // 1. Crear lonchera
         const lunchbox = await apiService.post('/lunchboxes', {
             hijo_id: parseInt(hijoId.value),
             fecha: fecha.value,
-            estado: "Borrador",
+            estado: "Borrador", // RF3.1
             direccion_id: direccionId.value ? parseInt(direccionId.value) : null
         });
         
+        // 2. Agregar items
         for (const food of selectedFoods.value) {
             await apiService.post('/lunchboxes/' + lunchbox.id + '/items', {
                 alimento_id: food.id,
@@ -190,15 +214,15 @@ const createLunchbox = async () => {
         
         Swal.close();
         
-        Swal.fire('�Exito!', 'Lonchera creada correctamente', 'success');
+        Swal.fire('¡Éxito!', 'Lonchera creada correctamente', 'success');
         
         setTimeout(() => {
-            router.push('/mis-loncheras');
+            router.push('/app/mis-loncheras');
         }, 2000);
         
     } catch (error) {
         Swal.close();
-        Swal.fire('Error', error.message || 'No se pudo completar la creacion de la lonchera', 'error');
+        Swal.fire('Error', error.message || 'No se pudo completar la creación de la lonchera', 'error');
     }
 };
 
@@ -213,6 +237,7 @@ const loadData = async () => {
   
   try {
     const [foodList, childList, addressList] = await Promise.all([
+        // Cargamos todos los alimentos activos (true)
         apiService.get('/foods?only_active=true'), 
         apiService.get('/children?usuario_id=' + userData.value.id),
         apiService.get('/addresses?usuario_id=' + userData.value.id)
@@ -225,6 +250,7 @@ const loadData = async () => {
     const preselectedHijoId = route.query.hijoId;
     if (preselectedHijoId) {
         hijoId.value = parseInt(preselectedHijoId);
+        loadChildRestrictions(); // Carga restricciones si hay hijo preseleccionado
     }
     
     isLoading.value = false;
@@ -235,53 +261,71 @@ const loadData = async () => {
 };
 
 onMounted(() => {
-  // ELIMINAMOS EL BLOQUEO INICIAL. El router ya asegura que sea Estandar/Premium.
-  loadData();
+  if (canCreate.value) {
+    loadData();
+  } else {
+      isLoading.value = false;
+  }
 });
 </script>
 
 <template>
-  <main class="flex-grow-1 p-4 bg-light">
+  <main class="flex-grow-1 p-4 bg-light-nb">
     <div class="dashboard-header mb-4">
-        <h1 class="h3">Crear Nueva Lonchera</h1>
-        <p class="text-muted">Selecciona los alimentos y asigna la entrega (Plan: {{ userData?.membresia?.tipo }})</p>
+        <h1 class="h3 text-dark-nb">Crear Nueva Lonchera</h1>
+        <p class="text-muted-dark">Selecciona los alimentos y asigna la entrega (Plan: {{ userData?.membresia?.tipo }})</p>
     </div>
 
-    <div v-if="isLoading" class="text-center p-5">
+    <div v-if="!canCreate" class="card p-5 text-center card-shadow">
+        <i class="fas fa-lock text-secondary-nb mb-3" style="font-size: 48px;"></i>
+        <h3 class="h4 text-dark-nb">Función de Plan Estándar o Premium</h3>
+        <p class="text-muted-dark mb-4">La creación de loncheras es exclusiva de los planes Estándar y Premium.</p>
+        <router-link to="/app/perfil" class="btn btn-warning-nb w-auto mx-auto text-dark-nb">Ver Planes</router-link>
+    </div>
+
+    <div v-else-if="isLoading" class="text-center p-5 bg-light-nb">
       <i class="fas fa-spinner fa-spin fa-2x text-primary-nb"></i>
-      <p class="mt-2 text-muted">Cargando datos...</p>
+      <p class="mt-2 text-muted-dark">Cargando datos...</p>
     </div>
 
     <div v-else class="row g-4">
         <div class="col-lg-6">
             <div class="card p-4 card-shadow mb-4">
-                <h5 class="fw-bold mb-3">Informacion de la Lonchera</h5>
+                <h5 class="fw-bold mb-3 text-dark-nb">Información de la Lonchera</h5>
                 <form @submit.prevent="createLunchbox">
                     <div class="mb-3">
-                        <label class="form-label">Hijo</label>
+                        <label class="form-label text-dark-nb">Hijo</label>
                         <select id="hijoSelect" class="form-select" required v-model="hijoId">
                             <option :value="null" disabled>Selecciona un hijo</option>
                             <option v-for="h in hijos" :key="h.id" :value="h.id">{{ h.nombre }}</option>
                         </select>
+                        <p v-if="hijos.length === 0" class="text-danger small mt-2">¡Debes agregar un hijo primero!</p>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Fecha</label>
-                        <input type="date" id="fechaInput" class="form-control" required v-model="fecha" :min="fecha">
+                        <label class="form-label text-dark-nb">Fecha</label>
+                        <input type="date" id="fechaInput" class="form-control" required v-model="fecha" :min="minDate">
                     </div>
                     <div class="mb-3">
-                        <label class="form-label">Direccion de Entrega</label>
+                        <label class="form-label text-dark-nb">Dirección de Entrega</label>
                         <select id="direccionSelect" class="form-select" v-model="direccionId">
-                            <option :value="null">Selecciona una direccion (opcional)</option>
+                            <option :value="null">Selecciona una dirección (opcional)</option>
                             <option v-for="d in direcciones" :key="d.id" :value="d.id">{{ d.etiqueta }} - {{ d.direccion }}</option>
                         </select>
+                        <p v-if="direcciones.length === 0" class="text-muted-dark small mt-2">Agrega direcciones en la sección Direcciones.</p>
                     </div>
                 </form>
             </div>
 
-            <div v-if="canPersonalize" class="card p-4 card-shadow">
-                <h5 class="fw-bold mb-3">Catalogo de Alimentos (Premium)</h5>
+            <div class="card p-4 card-shadow">
+                <h5 class="fw-bold mb-3 text-dark-nb">
+                    Catálogo de Alimentos 
+                    <span v-if="canPersonalize" class="badge bg-primary-light text-dark-nb">Premium</span>
+                </h5>
                 <input type="text" v-model="searchTerm" class="form-control mb-3" placeholder="Buscar alimento...">
-                <div id="foodsContainer" style="max-height: 400px; overflow-y: auto;">
+                <div v-if="!canPersonalize" class="text-center p-3 border rounded">
+                    <p class="text-muted-dark mb-0 small">Solo puedes agregar alimentos desde "Menús Predeterminados" con tu plan actual.</p>
+                </div>
+                <div v-else id="foodsContainer" style="max-height: 400px; overflow-y: auto;">
                     <FoodItemCard 
                         v-for="food in filteredFoods" 
                         :key="food.id"
@@ -289,18 +333,14 @@ onMounted(() => {
                         :formatCurrency="formatCurrency"
                         @add-food="addFood"
                     />
-                    <p v-if="filteredFoods.length === 0" class="text-center text-muted">No se encontraron alimentos.</p>
+                    <p v-if="filteredFoods.length === 0" class="text-center text-muted-dark">No se encontraron alimentos activos.</p>
                 </div>
-            </div>
-            <div v-else class="card p-4 card-shadow text-center">
-                 <i class="fas fa-lock text-warning mb-3" style="font-size: 48px;"></i>
-                 <p class="text-muted">La **Seleccion Alimento por Alimento** requiere el Plan Premium. Usa la seccion de Menus Predeterminados.</p>
             </div>
         </div>
 
         <div class="col-lg-6">
             <div class="card p-4 card-shadow mb-4">
-                <h5 class="fw-bold mb-3">Alimentos Seleccionados ({{ selectedFoods.length }})</h5>
+                <h5 class="fw-bold mb-3 text-dark-nb">Alimentos Seleccionados ({{ selectedFoods.length }})</h5>
                 <div id="selectedFoodsContainer" style="min-height: 150px;">
                     <SelectedFoodItem 
                         v-for="food in selectedFoods"
@@ -310,39 +350,39 @@ onMounted(() => {
                         @update-quantity="updateQuantity"
                         @remove-food="removeFood"
                     />
-                    <p v-if="selectedFoods.length === 0" class="text-center text-muted">No hay alimentos seleccionados</p>
+                    <p v-if="selectedFoods.length === 0" class="text-center text-muted-dark">No hay alimentos seleccionados</p>
                 </div>
             </div>
 
             <div class="card p-4 card-shadow">
-                <h5 class="fw-bold mb-3">Resumen Nutricional y Costos</h5>
+                <h5 class="fw-bold mb-3 text-dark-nb">Resumen Nutricional y Alertas</h5>
                 
                 <div class="d-flex justify-content-between mb-2 border-bottom">
-                    <span>Calorias Totales:</span>
-                    <strong id="totalCalorias">{{ totalCalorias.toFixed(1) }} kcal</strong>
+                    <span class="text-dark-nb">Calorías Totales:</span>
+                    <strong id="totalCalorias" class="text-primary-nb">{{ totalCalorias.toFixed(1) }} kcal</strong>
                 </div>
                 <div class="d-flex justify-content-between mb-2 border-bottom">
-                    <span>Proteinas Totales:</span>
-                    <strong id="totalProteinas">{{ totalProteinas.toFixed(1) }} g</strong>
+                    <span class="text-dark-nb">Proteínas Totales:</span>
+                    <strong id="totalProteinas" class="text-dark-nb">{{ totalProteinas.toFixed(1) }} g</strong>
                 </div>
                 <div class="d-flex justify-content-between mb-3 border-bottom">
-                    <span>Carbohidratos Totales:</span>
-                    <strong id="totalCarbos">{{ totalCarbos.toFixed(1) }} g</strong>
+                    <span class="text-dark-nb">Carbohidratos Totales:</span>
+                    <strong id="totalCarbos" class="text-dark-nb">{{ totalCarbos.toFixed(1) }} g</strong>
                 </div>
                  <div class="d-flex justify-content-between mb-4">
-                    <span class="fw-bold fs-5">Costo Total Estimado:</span>
+                    <span class="fw-bold fs-5 text-dark-nb">Costo Total Estimado:</span>
                     <strong id="totalCosto" class="fs-5 text-danger">{{ formatCurrency(totalCosto) }}</strong>
                 </div>
 
                 <div id="alertasRestriccion" class="mb-3">
-                    <div v-for="(alert, index) in alertas" :key="index" :class="'alert alert-' + alert.type + ' p-2 mb-2'" role="alert">
+                    <div v-for="(alert, index) in alertas" :key="index" :class="'alert alert-' + alert.type + ' p-2 mb-2 fw-bold'" role="alert">
                          <i :class="['fas', alert.isCritical ? 'fa-exclamation-triangle' : 'fa-balance-scale', 'me-1']"></i> 
                          {{ alert.message }}
                     </div>
                 </div>
 
-                <button class="btn btn-primary-nb w-100 py-2" @click="createLunchbox" :disabled="selectedFoods.length === 0 || !hijoId">
-                    <i class="fas fa-check me-2"></i> Crear Lonchera
+                <button class="btn btn-primary-nb w-100 py-3" @click="createLunchbox" :disabled="selectedFoods.length === 0 || !hijoId">
+                    <i class="fas fa-check me-2"></i> Crear Lonchera (Borrador)
                 </button>
             </div>
         </div>

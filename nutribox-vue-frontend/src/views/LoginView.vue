@@ -23,11 +23,8 @@ const handleLogin = async () => {
   });
 
   try {
-    // La función login en authService ya maneja la obtención del token y los detalles del usuario
     await authService.login(email.value, password.value);
     Swal.close(); 
-    
-    // Redirigir al dashboard (ya agrupado bajo /app)
     router.push('/app/dashboard');
 
   } catch (error) {
@@ -40,9 +37,9 @@ const handleLogin = async () => {
 
 <template>
   <div class="container-fluid min-vh-100 d-flex align-items-center justify-content-center bg-light-nb">
-    <div class="row w-100 justify-content-center align-items-stretch">
+    <div class="row w-100 justify-content-center align-items-stretch login-container">
       
-        <div class="col-lg-5 d-none d-lg-flex flex-column justify-content-center p-5 bg-primary-nb text-white login-info-card">
+        <div class="col-lg-5 d-none d-lg-flex flex-column justify-content-center p-5 bg-primary-nb text-white login-info-card card-shadow-top">
             <div class="text-center">
                  <h1 class="fw-bold display-4 mb-4">🍃 NutriBox</h1>
                  <p class="lead mb-4">
@@ -53,10 +50,10 @@ const handleLogin = async () => {
                      <li class="mb-2"><i class="fas fa-chart-pie me-2 text-secondary-nb"></i> Resumen nutricional al instante</li>
                      <li class="mb-2"><i class="fas fa-truck me-2 text-secondary-nb"></i> Gestión de direcciones de entrega</li>
                  </ul>
-            </div>
+                 </div>
         </div>
 
-        <div class="col-lg-4 col-md-8 d-flex justify-content-center align-items-center p-5 bg-card">
+        <div class="col-lg-4 col-md-8 d-flex justify-content-center align-items-center p-5 bg-card form-card">
             <div class="w-100" style="max-width: 350px;">
                 <div class="text-center mb-4">
                     <h1 class="text-primary-nb fw-bold fs-3">🍃 NutriBox</h1>
@@ -87,9 +84,19 @@ const handleLogin = async () => {
 
 <style scoped>
 /* Estilos específicos para la vista de Login */
+.login-container {
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    max-width: 900px;
+}
 .login-info-card {
-    border-radius: 1rem 0 0 1rem; /* Esquinas redondeadas solo a la izquierda */
+    border-radius: 0; 
     min-height: 500px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.form-card {
+     border-radius: 0;
 }
 /* Asegurar que los íconos de info sean visibles (usamos el amarillo de CTA para visibilidad) */
 .login-info-card .text-secondary-nb {

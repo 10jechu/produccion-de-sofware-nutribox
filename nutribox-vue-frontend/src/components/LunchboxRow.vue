@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { defineProps, defineEmits } from 'vue';
 
 const props = defineProps({
@@ -19,15 +19,15 @@ const props = defineProps({
 const emit = defineEmits(['view-detail', 'delete-lunchbox']);
 
 const getBadgeClass = (estado) => {
-    if (estado === "Confirmada") return "bg-success";
-    if (estado === "Borrador") return "bg-warning text-dark";
-    if (estado === "Archivada") return "bg-secondary";
-    return "bg-info";
+    if (estado === "Confirmada") return "bg-primary-nb text-white";
+    if (estado === "Borrador") return "bg-secondary text-dark-nb";
+    if (estado === "Archivada") return "bg-muted-dark text-white";
+    return "bg-accent text-white";
 }
 </script>
 
 <template>
-    <tr>
+    <tr class="text-dark-nb">
         <td>{{ formatDate(lunchbox.fecha) }}</td>
         <td><strong>{{ lunchbox.hijo_nombre }}</strong></td>
         <td>
@@ -39,7 +39,7 @@ const getBadgeClass = (estado) => {
         <td>{{ lunchbox.total_calorias }} kcal</td>
         <td>{{ formatCurrency(lunchbox.total_costo) }}</td>
         <td>
-            <button class="btn btn-sm btn-outline-primary me-1" @click="emit('view-detail', lunchbox.id)">
+            <button class="btn btn-sm btn-outline-primary-nb me-1" @click="emit('view-detail', lunchbox.id)">
                 <i class="fas fa-eye"></i>
                 <span class="d-none d-md-inline"> Ver Detalle</span>
             </button>

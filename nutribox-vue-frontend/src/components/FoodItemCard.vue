@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { defineProps, defineEmits } from 'vue';
 
 const props = defineProps({
@@ -21,11 +21,12 @@ const addFood = () => {
 </script>
 
 <template>
-  <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+  <div class="d-flex justify-content-between align-items-center p-3 border-bottom food-item-card">
     <div>
-        <strong>{{ food.nombre }}</strong>
-        <div class="small text-muted">
-            {{ food.kcal?.toFixed(1) ?? 'N/A' }} kcal | {{ formatCurrency(food.costo) }}/u
+        <strong class="text-dark-nb">{{ food.nombre }}</strong>
+        <div class="small text-muted-dark mt-1">
+            <i class="fas fa-fire me-1 text-secondary-nb"></i> {{ food.kcal?.toFixed(1) ?? 'N/A' }} kcal 
+            | <i class="fas fa-dollar-sign me-1 text-primary-nb"></i> {{ formatCurrency(food.costo) }}/u
         </div>
     </div>
     <button class="btn btn-sm btn-primary-nb text-white" @click="addFood" title="Agregar a la lonchera">
@@ -35,11 +36,13 @@ const addFood = () => {
 </template>
 
 <style scoped>
-/* Estilos opcionales para este componente específico */
+.food-item-card {
+    transition: background-color 0.1s ease;
+}
+.food-item-card:hover {
+    background-color: var(--nb-border-medium);
+}
 button {
   transition: background-color 0.2s ease;
-}
-button:hover {
-  background-color: var(--nb-primary-dark, #388E3C) !important; /* Usa variable CSS si existe */
 }
 </style>
