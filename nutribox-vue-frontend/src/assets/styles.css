@@ -52,7 +52,7 @@ body {
 .bg-light-nb { background-color: var(--bg-light) !important; }
 .bg-card { background-color: var(--bg-card) !important; }
 
-
+/* Botones y Hover */
 .btn-primary-nb { 
     background-color: var(--primary) !important; 
     border-color: var(--primary) !important; 
@@ -116,7 +116,7 @@ body {
     border-radius: 0.75rem; 
     transition: all 0.3s ease;
 }
-.card-shadow:hover, .feature-card:hover, .plan-card:hover:not(.premium) { 
+.card-shadow:hover { 
     transform: translateY(-3px);
     box-shadow: var(--shadow-lg);
 }
@@ -124,73 +124,49 @@ body {
     color: var(--primary-dark) !important;
 }
 
-/* ------------------- HERO FULL-SCREEN (CLAVE) ------------------- */
-.hero-full {
-    /* CLAVE: Fondo Crema base (FFF6E8) */
-    background: var(--bg-hero); 
-    color: var(--text-dark); 
-    min-height: 45vh; 
+
+/* ------------------- DASHBOARD Y VISTAS INTERNAS ------------------- */
+
+/* Contenedor principal de las métricas (lo haremos interactivo) */
+.stat-card-link {
+    display: block;
+    text-decoration: none;
+}
+.stat-card-link:hover .card {
+    transform: translateY(-5px); /* Más énfasis en el hover */
+    box-shadow: var(--shadow-xl);
+}
+
+/* Iconos de las estadísticas del dashboard (Más grandes y redondeados) */
+.stat-icon {
+    width: 60px;
+    height: 60px;
     display: flex;
     align-items: center;
-    padding: 3rem 0;
-    border-bottom: 5px solid var(--primary-light); /* Separador visual */
-}
-.hero-full h1 {
-    font-weight: 900;
-    font-size: 3rem; 
-    line-height: 1.1;
-    color: var(--primary-dark);
-}
-.hero-full p.lead {
-    font-size: 1.2rem;
-    color: var(--nb-text-muted);
-}
-.lonchera-visual {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 60%); /* Fondo para la lonchera */
-    border: 3px solid var(--primary-light);
-    border-radius: 1rem;
-    padding: 2rem;
-    height: 200px;
-    width: 100%;
-    display: flex;
     justify-content: center;
-    align-items: center;
-    font-size: 3rem; 
-    color: white; /* Icono blanco sobre verde */
-    box-shadow: var(--shadow-lg);
+    font-size: 2.5rem !important;
+    border-radius: 50%; /* Circular */
 }
 
-/* ------------------- Sección de Características ------------------- */
-.feature-card-modern {
-    background-color: var(--bg-card);
-    border: 1px solid var(--nb-border-medium); 
-    transition: all 0.3s ease;
-    border-radius: 0.75rem;
-    text-align: center;
-    padding: 1.5rem;
-    box-shadow: var(--shadow-sm); 
+/* Estilo para el botón de Admin */
+.btn-primary-dark {
+     background-color: var(--primary-dark) !important;
+     border-color: var(--primary-dark) !important;
+     color: white !important;
+}
+.btn-primary-dark:hover {
+     background-color: var(--primary) !important;
 }
 
-/* ------------------- Sección de Planes ------------------- */
-.plan-card {
-    background-color: var(--bg-card);
-    border: 1px solid var(--nb-border-medium);
-    transition: all 0.3s ease;
-    border-radius: 0.75rem;
-    padding: 2rem;
+/* Estilos de Badges para membresías (para la tarjeta de info) */
+.badge.bg-secondary {
+    background-color: var(--secondary) !important;
+    color: var(--text-dark) !important;
 }
-.plan-card.premium {
-    border: 3px solid var(--secondary) !important;
-    transform: scale(1.05); 
-    box-shadow: 0 15px 30px rgba(249, 199, 79, 0.5);
-    z-index: 2; 
+.badge.bg-accent {
+    background-color: var(--accent) !important;
 }
 
-/* ------------------- CTA Final (CLAVE: Fondo Oscuro para Contraste) ------------------- */
-.cta-final {
-    background-color: var(--primary-dark) !important;
-    color: white !important;
-}
 
 /* ------------------- Footer ------------------- */
 footer {

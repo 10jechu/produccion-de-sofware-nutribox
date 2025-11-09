@@ -1,46 +1,39 @@
-<script setup>
-// Imports necesarios SOLO para el contenido del Dashboard
+﻿<script setup>
 import { ref, onMounted } from 'vue';
 import { getUserDetail } from '@/utils/user';
-// Ya NO necesitas importar useRouter ni authService aquí para el logout
+import { useRouter } from 'vue-router';
+import authService from '@/services/auth.service';
 
 const userData = ref(null);
 const isLoading = ref(true);
+const router = useRouter();
 
-// Función para cargar los datos específicos del Dashboard
 const loadDashboard = async () => {
   isLoading.value = true;
-  const user = getUserDetail(); // Obtiene los datos del usuario (ya deberían estar en localStorage)
+  const user = getUserDetail(); 
 
   if (!user) {
-    // Si no hay datos de usuario, podrías manejarlo (aunque la guardia del router ya protege)
-    console.error("Dashboard: No se encontraron datos del usuario.");
-    // Podrías redirigir a login si es necesario, aunque el layout/guardia lo haría
-    // import authService from '@/services/auth.service';
-    // import { useRouter } from 'vue-router';
-    // const router = useRouter();
-    // authService.logout();
-    // router.push('/login');
+    authService.logout();
+    router.push('/login');
     isLoading.value = false;
     return;
   }
-  // Asigna los datos del usuario para usarlos en la plantilla
+  
   userData.value = user;
   isLoading.value = false;
 };
 
-// Función auxiliar para clases de badge (se queda aquí porque se usa en la plantilla)
+// Función auxiliar para clases de badge (Premium Amarillo, Estandar Verde, etc.)
 const getMembershipBadgeClass = (tipo) => {
   if (tipo === 'Premium') {
-    return 'bg-warning text-dark';
-  } else if (tipo === 'Estandar') { // Asegúrate que coincida con el nombre en tus datos
-    return 'bg-info';
-  } else { // Asume Básico o Free
-    return 'bg-secondary';
+    return 'bg-secondary text-dark-nb'; // Amarillo miel
+  } else if (tipo === 'Estandar') { 
+    return 'bg-primary-dark text-white'; // Verde oscuro
+  } else { 
+    return 'bg-secondary text-dark-nb';
   }
 };
 
-// Carga los datos cuando el componente se monta
 onMounted(() => {
   loadDashboard();
 });
@@ -48,116 +41,146 @@ onMounted(() => {
 </script>
 
 <template>
-  <div v-if="isLoading" class="text-center p-5">
-    <i class="fas fa-spinner fa-spin fa-2x text-primary-nb"></i>
-    <p class="mt-2 text-muted">Cargando dashboard...</p> </div>
+  <main class="flex-grow-1 p-4 bg-light-nb">
+    <div v-if="isLoading" class="text-center p-5 bg-light-nb">
+      <i class="fas fa-spinner fa-spin fa-2x text-primary-nb"></i>
+      <p class="mt-2 text-muted-dark">Cargando dashboard...</p> </div>
 
-  <div v-else-if="userData">
-    <div class="dashboard-header mb-4">
-        <h1 class="h3">Bienvenido, <span id="userName" class="text-primary-nb">{{ userData.nombre }}</span></h1>
-        <p class="text-muted">Aqui tienes un resumen de tu actividad</p>
-    </div>
-
-    <div class="row g-4 mb-4">
-        <div class="col-md-4">
-            <div class="card p-3 card-shadow">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-primary-nb rounded-3 p-3 text-white fs-4 me-3">
-                        <i class="fas fa-child"></i>
-                    </div>
-                    <div>
-                        <h3 id="totalHijos" class="h2 fw-bold mb-0">{{ userData.resumen?.total_hijos ?? 0 }}</h3>
-                        <p class="text-muted mb-0">Hijos Registrados</p>
-                    </div>
-                </div>
-            </div>
+    <div v-else-if="userData">
+        <div class="dashboard-header mb-4">
+            <h1 class="h3 text-dark-nb">Bienvenido, <span id="userName" class="text-primary-nb">{{ userData.nombre }}</span></h1>
+            <p class="text-muted-dark">Aquí tienes un resumen de tu actividad</p>
         </div>
 
-        <div class="col-md-4">
-            <div class="card p-3 card-shadow">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-warning rounded-3 p-3 text-white fs-4 me-3">
-                        <i class="fas fa-box"></i>
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <router-link to="/app/hijos" class="stat-card-link text-decoration-none">
+                    <div class="card p-4 card-shadow-top h-100">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h3 id="totalHijos" class="h2 fw-bold mb-0 text-dark-nb">{{ userData.resumen?.total_hijos ?? 0 }}</h3>
+                                <p class="text-muted-dark mb-1 small">Hijos Registrados</p>
+                            </div>
+                            <div class="stat-icon bg-primary-light text-white">
+                                <i class="fas fa-child"></i>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <h3 id="totalLoncheras" class="h2 fw-bold mb-0">{{ userData.resumen?.loncheras_este_mes ?? 0 }}</h3>
-                        <p class="text-muted mb-0">Loncheras (este mes)</p>
-                    </div>
-                </div>
+                </router-link>
             </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card p-3 card-shadow">
-                <div class="d-flex align-items-center">
-                    <div class="stat-icon bg-info rounded-3 p-3 text-white fs-4 me-3">
-                        <i class="fas fa-map-marker-alt"></i>
+            <div class="col-md-4">
+                <router-link to="/app/mis-loncheras" class="stat-card-link text-decoration-none">
+                    <div class="card p-4 card-shadow-top h-100">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                <h3 id="totalLoncheras" class="h2 fw-bold mb-0 text-dark-nb">{{ userData.resumen?.loncheras_este_mes ?? 0 }}</h3>
+                                <p class="text-muted-dark mb-1 small">Loncheras (este mes)</p>
+                            </div>
+                            <div class="stat-icon bg-secondary text-dark-nb">
+                                <i class="fas fa-box"></i>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <h3 id="totalDirecciones" class="h2 fw-bold mb-0">{{ userData.resumen?.total_direcciones ?? 0 }}</h3>
-                        <p class="text-muted mb-0">Direcciones</p>
+                </router-link>
+            </div>
+            <div class="col-md-4">
+                <router-link to="/app/direcciones" class="stat-card-link text-decoration-none">
+                    <div class="card p-4 card-shadow-top h-100">
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div>
+                                 <h3 id="totalDirecciones" class="h2 fw-bold mb-0 text-dark-nb">{{ userData.resumen?.total_direcciones ?? 0 }}</h3>
+                                 <p class="text-muted-dark mb-1 small">Direcciones</p>
+                            </div>
+                            <div class="stat-icon bg-accent text-white">
+                                <i class="fas fa-map-marker-alt"></i>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-4">
-        <div class="col-md-6">
-            <div class="card p-4 card-shadow">
-                <h5 class="mb-3 fw-bold">Acciones Rapidas</h5>
-                <div class="d-grid gap-2">
-                    <router-link to="/crear-lonchera" class="btn btn-primary-nb py-2">
-                        <i class="fas fa-plus me-2"></i> Crear Nueva Lonchera
-                    </router-link>
-                    <router-link to="/hijos" class="btn btn-outline-primary py-2">
-                        <i class="fas fa-child me-2"></i> Gestionar Hijos
-                    </router-link>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6">
-            <div class="card p-4 card-shadow">
-                <h5 class="mb-3 fw-bold">Informacion de Membresia</h5>
-                <div class="d-flex justify-content-between mb-2">
-                    <span class="fw-bold">Plan Actual:</span>
-                    <span
-                      v-if="userData.membresia"
-                      :class="['badge', 'fs-6', getMembershipBadgeClass(userData.membresia.tipo)]"
-                    >
-                      {{ userData.membresia.tipo }}
-                    </span>
-                     <span v-else class="badge bg-secondary fs-6">N/A</span>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <span class="text-muted">Limite de Direcciones:</span>
-                    <span id="maxDirecciones" v-if="userData.membresia">{{ userData.membresia.max_direcciones === 0 ? 'Ilimitado' : userData.membresia.max_direcciones }}</span>
-                    <span id="maxDirecciones" v-else>N/A</span>
-                </div>
-                 <router-link to="/perfil" class="btn btn-sm btn-outline-secondary w-100 mt-4">
-                        Ver detalles de membresia
                 </router-link>
             </div>
         </div>
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="card p-4 card-shadow h-100">
+                    <h5 class="mb-3 fw-bold text-dark-nb">Acciones Rápidas</h5>
+                    <div class="d-grid gap-3">
+                        <router-link to="/app/crear-lonchera" class="btn btn-primary-nb py-3">
+                            <i class="fas fa-plus me-2"></i> Crear Nueva Lonchera
+                        </router-link>
+                        <router-link to="/app/hijos" class="btn btn-outline-primary-nb py-3">
+                            <i class="fas fa-child me-2"></i> Gestionar Hijos
+                        </router-link>
+                        
+                        <router-link v-if="userData.rol.nombre === 'Admin'" to="/app/admin/foods" class="btn btn-primary-dark py-3 mt-3">
+                             <i class="fas fa-cog me-2"></i> Panel de Administración
+                        </router-link>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card p-4 card-shadow h-100">
+                    <h5 class="mb-3 fw-bold text-dark-nb">Información de Membresía</h5>
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span class="fw-bold text-dark-nb">Plan Actual:</span>
+                        <span
+                          v-if="userData.membresia"
+                          :class="['badge', 'fs-6', getMembershipBadgeClass(userData.membresia.tipo)]"
+                        >
+                          {{ userData.membresia.tipo }}
+                        </span>
+                         <span v-else class="badge bg-muted-dark fs-6">N/A</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2">
+                        <span class="text-muted-dark">Límite de Direcciones:</span>
+                        <span id="maxDirecciones" v-if="userData.membresia" class="text-dark-nb">{{ userData.membresia.max_direcciones === 0 ? 'Ilimitado' : userData.membresia.max_direcciones }}</span>
+                        <span id="maxDirecciones" v-else class="text-dark-nb">N/A</span>
+                    </div>
+                     <router-link to="/app/perfil" class="btn btn-sm btn-outline-primary-nb w-100 mt-4">
+                            Ver detalles de membresía
+                    </router-link>
+                </div>
+            </div>
+        </div>
+      </div>
+
+    <div v-else class="text-center p-5 bg-light-nb">
+      <p class="text-danger">Error al cargar la información del usuario.</p>
+      <p class="text-muted-dark">Intenta <router-link to="/login">iniciar sesión</router-link> de nuevo.</p>
     </div>
-  </div>
-
-  <div v-else class="text-center p-5">
-    <p class="text-danger">Error al cargar la informacion del usuario.</p>
-    <p class="text-muted">Intenta <a href="/login" @click.prevent="forceLogout">iniciar sesión</a> de nuevo.</p>
-  </div>
-
+  </main>
 </template>
 
 <style scoped>
-/* Estilos específicos SOLO para el contenido del Dashboard */
-/* Ya NO necesitas estilos para .sidebar aquí */
+/* Estilos específicos para el componente */
 .stat-icon {
   width: 60px;
   height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 2.2rem; 
+  border-radius: 50%;
+}
+.stat-card-link {
+    display: block;
+    text-decoration: none;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.stat-card-link:hover .card {
+    transform: translateY(-5px); 
+    box-shadow: var(--shadow-xl);
+    cursor: pointer;
+}
+
+/* Para mantener la estética limpia como la imagen de referencia */
+.card-shadow-top {
+    box-shadow: var(--shadow-md); 
+    border: 1px solid var(--nb-border-medium);
+    background-color: var(--bg-card); 
+    border-radius: 0.75rem; 
+}
+.card-shadow-top:hover {
+     box-shadow: var(--shadow-lg); 
 }
 </style>
