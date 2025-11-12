@@ -22,11 +22,14 @@ import MainLayout from '@/layouts/MainLayout.vue'
 import { hasRequiredMembership, isAdmin, getUserDetail } from '@/utils/user';
 
 const routes = [
+  // --- Ruta Principal / Portada (PÚBLICA) ---
   {
     path: '/',
     name: 'home',
     component: LandingView
   },
+
+  // --- Rutas Públicas de Auth ---
   {
     path: '/login',
     name: 'login',
@@ -37,6 +40,8 @@ const routes = [
     name: 'register',
     component: RegisterView
   },
+
+  // --- Rutas Privadas (agrupadas bajo /app) ---
   {
     path: '/app',
     component: MainLayout,
@@ -96,19 +101,19 @@ const routes = [
         component: AlimentosView
       },
       {
-        path: 'admin/foods',
-        name: 'admin-foods',
-        component: AdminView,
+        path: 'admin/foods',\n        name: 'admin-foods',\n        component: AdminView,\n        meta: { requiresAdmin: true }\n      },\n      {\n        path: 'admin/menus',\n        name: 'admin-menus',\n        component: AdminView,\n        meta: { requiresAdmin: true }
         meta: { requiresAdmin: true }
       },
       {
-        path: 'admin/menus',
-        name: 'admin-menus',
+        path: 'admin/menus',  // ✅ NUEVA RUTA PARA ADMIN MENÚS
+        name: 'admin-menus', 
         component: AdminView,
         meta: { requiresAdmin: true }
-      }
+      },
     ]
   },
+
+  // --- Catch-all para rutas no encontradas ---
   {
     path: '/:pathMatch(.*)*',
     redirect: '/'
@@ -120,6 +125,7 @@ const router = createRouter({
   routes
 });
 
+// --- Lógica de Guardia de Navegación ---
 router.beforeEach((to, from, next) => {
   const isAuthenticated = !!localStorage.getItem('nutribox_token');
   const user = getUserDetail();
@@ -150,3 +156,4 @@ router.beforeEach((to, from, next) => {
 });
 
 export default router;
+
