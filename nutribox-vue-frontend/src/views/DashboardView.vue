@@ -1,4 +1,227 @@
-﻿<script setup>
+﻿<template>
+  <div class="dashboard-container">
+    <!-- Header del Dashboard -->
+    <div class="dashboard-header mb-4">
+      <h1 class="h2 mb-2">Dashboard</h1>
+      <p class="text-muted">Bienvenido a tu panel de control de NutriBox</p>
+    </div>
+
+    <!-- Tarjeta de Información del Usuario -->
+    <div class="row">
+      <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-success text-white">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-user-circle me-2"></i>Información de tu Cuenta
+            </h5>
+          </div>
+          <div class="card-body">
+            <div v-if="isLoading" class="text-center py-4">
+              <div class="spinner-border text-success" role="status">
+                <span class="visually-hidden">Cargando...</span>
+              </div>
+              <p class="mt-2 text-muted">Cargando información...</p>
+            </div>
+
+            <div v-else-if="userData" class="user-info">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="info-item mb-3">
+                    <label class="form-label text-muted mb-1">Nombre</label>
+                    <p class="fs-5 mb-0">{{ userData.nombre || 'No especificado' }}</p>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="info-item mb-3">
+                    <label class="form-label text-muted mb-1">Email</label>
+                    <p class="fs-6 mb-0">{{ userData.email || 'No especificado' }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="info-item mb-3">
+                    <label class="form-label text-muted mb-1">Rol</label>
+                    <div>
+                      <span :class="getRoleBadgeClass(userData.rol?.nombre)" class="badge fs-6">
+                        {{ userData.rol?.nombre || 'Usuario' }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="info-item mb-3">
+                    <label class="form-label text-muted mb-1">Plan de Membresía</label>
+                    <div>
+                      <span :class="getMembershipBadgeClass(userData.membresia?.tipo)" class="badge fs-6">
+                        {{ userData.membresia?.tipo || 'Free' }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Información específica por Rol -->
+              <div v-if="userData.rol?.nombre === 'Admin'" class="admin-info mt-4 p-3 bg-light rounded">
+                <h6 class="text-success mb-3">
+                  <i class="fas fa-shield-alt me-2"></i>Privilegios de Administrador
+                </h6>
+                <ul class="list-unstyled mb-0">
+                  <li><i class="fas fa-check text-success me-2"></i>Gestionar alimentos del sistema</li>
+                  <li><i class="fas fa-check text-success me-2"></i>Crear y editar menús base</li>
+                  <li><i class="fas fa-check text-success me-2"></i>Acceso al panel de administración</li>
+                  <li><i class="fas fa-check text-success me-2"></i>Ver todos los usuarios registrados</li>
+                </ul>
+              </div>
+
+              <!-- Información de Membresía para Usuarios Normales -->
+              <div v-else class="membership-info mt-4">
+                <h6 class="text-primary mb-3">
+                  <i class="fas fa-crown me-2"></i>Beneficios de tu Plan
+                </h6>
+                <div class="row">
+                  <div class="col-md-6" v-if="userData.membresia?.tipo === 'Free'">
+                    <ul class="list-unstyled">
+                      <li><i class="fas fa-eye text-success me-2"></i>Visualizar alimentos</li>
+                      <li><i class="fas fa-book-open text-success me-2"></i>Ver menús predeterminados</li>
+                      <li><i class="fas fa-info-circle text-warning me-2"></i>Solo visualización</li>
+                    </ul>
+                    <div class="mt-3 p-3 bg-warning bg-opacity-10 rounded">
+                      <small class="text-warning">
+                        <i class="fas fa-lightbulb me-1"></i>
+                        Actualiza tu plan para crear loncheras personalizadas
+                      </small>
+                    </div>
+                  </div>
+                  <div class="col-md-6" v-else-if="userData.membresia?.tipo === 'Estandar'">
+                    <ul class="list-unstyled">
+                      <li><i class="fas fa-plus-circle text-success me-2"></i>Crear loncheras</li>
+                      <li><i class="fas fa-copy text-success me-2"></i>Copiar menús predeterminados</li>
+                      <li><i class="fas fa-map-marker-alt text-success me-2"></i>1 dirección de entrega</li>
+                    </ul>
+                  </div>
+                  <div class="col-md-6" v-else-if="userData.membresia?.tipo === 'Premium'">
+                    <ul class="list-unstyled">
+                      <li><i class="fas fa-star text-warning me-2"></i>Todas las funciones Estándar</li>
+                      <li><i class="fas fa-map-marker-alt text-warning me-2"></i>Hasta 3 direcciones</li>
+                      <li><i class="fas fa-history text-warning me-2"></i>Historial de consumo</li>
+                      <li><i class="fas fa-shield-alt text-warning me-2"></i>Restricciones alimentarias</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel de Acciones Rápidas -->
+      <div class="col-lg-4">
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-primary text-white">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-bolt me-2"></i>Acciones Rápidas
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="d-grid gap-2">
+              <!-- Para Admin -->
+              <template v-if="userData?.rol?.nombre === 'Admin'">
+                <router-link to="/app/alimentos" class="btn btn-success">
+                  <i class="fas fa-utensils me-2"></i>Gestionar Alimentos
+                </router-link>
+                
+                <router-link to="/app/menus" class="btn btn-outline-success">
+                  <i class="fas fa-book-open me-2"></i>Gestionar Menús
+                </router-link>
+
+                <router-link to="/app/admin/foods" class="btn btn-warning">
+                  <i class="fas fa-cog me-2"></i>Panel de Administración
+                </router-link>
+              </template>
+
+              <!-- Para Usuarios Normales -->
+              <template v-else>
+                <router-link 
+                  to="/app/crear-lonchera" 
+                  class="btn btn-success"
+                  v-if="userData?.membresia?.tipo !== 'Free'"
+                >
+                  <i class="fas fa-plus-circle me-2"></i>Crear Lonchera
+                </router-link>
+
+                <router-link 
+                  to="/app/crear-lonchera" 
+                  class="btn btn-outline-warning"
+                  v-else
+                >
+                  <i class="fas fa-crown me-2"></i>Actualizar Plan para Crear
+                </router-link>
+                
+                <router-link to="/app/alimentos" class="btn btn-outline-success">
+                  <i class="fas fa-utensils me-2"></i>Ver Alimentos
+                </router-link>
+
+                <router-link to="/app/menus" class="btn btn-outline-primary">
+                  <i class="fas fa-book-open me-2"></i>Explorar Menús
+                </router-link>
+              </template>
+
+              <router-link to="/app/perfil" class="btn btn-outline-info">
+                <i class="fas fa-user-edit me-2"></i>Editar Perfil
+              </router-link>
+
+              <router-link 
+                to="/app/perfil" 
+                class="btn btn-warning"
+                v-if="userData?.membresia?.tipo === 'Free' && userData?.rol?.nombre !== 'Admin'"
+              >
+                <i class="fas fa-rocket me-2"></i>Mejorar Plan
+              </router-link>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tarjeta de Estadísticas -->
+        <div class="card shadow-sm">
+          <div class="card-header bg-info text-white">
+            <h5 class="card-title mb-0">
+              <i class="fas fa-chart-pie me-2"></i>Resumen
+            </h5>
+          </div>
+          <div class="card-body">
+            <div class="text-center">
+              <div class="mb-3" v-if="userData?.rol?.nombre !== 'Admin'">
+                <i class="fas fa-user-friends fa-2x text-info mb-2"></i>
+                <h4 class="mb-0">{{ userData?.hijos?.length || 0 }}</h4>
+                <small class="text-muted">Hijos registrados</small>
+              </div>
+              <div class="mb-3" v-if="userData?.rol?.nombre !== 'Admin'">
+                <i class="fas fa-utensils fa-2x text-success mb-2"></i>
+                <h4 class="mb-0">{{ userData?.resumen?.total_loncheras || 0 }}</h4>
+                <small class="text-muted">Loncheras creadas</small>
+              </div>
+              <div class="mb-3" v-if="userData?.rol?.nombre === 'Admin'">
+                <i class="fas fa-utensils fa-2x text-primary mb-2"></i>
+                <h4 class="mb-0">Administrador</h4>
+                <small class="text-muted">Panel de control</small>
+              </div>
+              <div v-if="userData?.membresia?.tipo === 'Free' && userData?.rol?.nombre !== 'Admin'" class="mt-3 p-2 bg-light rounded">
+                <small class="text-muted">
+                  <i class="fas fa-info-circle me-1"></i>
+                  Actualiza tu plan para desbloquear todas las funciones
+                </small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
 import { ref, onMounted } from 'vue';
 import { getUserDetail } from '@/utils/user';
 import { useRouter } from 'vue-router';
@@ -10,7 +233,7 @@ const router = useRouter();
 
 const loadDashboard = async () => {
   isLoading.value = true;
-  const user = getUserDetail(); 
+  const user = getUserDetail();
 
   if (!user) {
     authService.logout();
@@ -18,169 +241,75 @@ const loadDashboard = async () => {
     isLoading.value = false;
     return;
   }
-  
+
   userData.value = user;
   isLoading.value = false;
 };
 
-// Función auxiliar para clases de badge (Premium Amarillo, Estandar Verde, etc.)
+// Clases para badges de rol
+const getRoleBadgeClass = (rol) => {
+  if (rol === 'Admin') {
+    return 'bg-warning text-dark';
+  }
+  return 'bg-secondary text-white';
+};
+
+// Clases para badges de membresía
 const getMembershipBadgeClass = (tipo) => {
   if (tipo === 'Premium') {
-    return 'bg-secondary text-dark-nb'; // Amarillo miel
-  } else if (tipo === 'Estandar') { 
-    return 'bg-primary-dark text-white'; // Verde oscuro
-  } else { 
-    return 'bg-secondary text-dark-nb';
+    return 'bg-warning text-dark';
+  } else if (tipo === 'Estandar') {
+    return 'bg-success text-white';
+  } else {
+    return 'bg-secondary text-white';
   }
 };
 
 onMounted(() => {
   loadDashboard();
 });
-
 </script>
 
-<template>
-  <main class="flex-grow-1 p-4 bg-light-nb">
-    <div v-if="isLoading" class="text-center p-5 bg-light-nb">
-      <i class="fas fa-spinner fa-spin fa-2x text-primary-nb"></i>
-      <p class="mt-2 text-muted-dark">Cargando dashboard...</p> </div>
-
-    <div v-else-if="userData">
-        <div class="dashboard-header mb-4">
-            <h1 class="h3 text-dark-nb">Bienvenido, <span id="userName" class="text-primary-nb">{{ userData.nombre }}</span></h1>
-            <p class="text-muted-dark">Aquí tienes un resumen de tu actividad</p>
-        </div>
-
-        <div class="row g-4 mb-4">
-            <div class="col-md-4">
-                <router-link to="/app/hijos" class="stat-card-link text-decoration-none">
-                    <div class="card p-4 card-shadow-top h-100">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div>
-                                <h3 id="totalHijos" class="h2 fw-bold mb-0 text-dark-nb">{{ userData.resumen?.total_hijos ?? 0 }}</h3>
-                                <p class="text-muted-dark mb-1 small">Hijos Registrados</p>
-                            </div>
-                            <div class="stat-icon bg-primary-light text-white">
-                                <i class="fas fa-child"></i>
-                            </div>
-                        </div>
-                    </div>
-                </router-link>
-            </div>
-            <div class="col-md-4">
-                <router-link to="/app/mis-loncheras" class="stat-card-link text-decoration-none">
-                    <div class="card p-4 card-shadow-top h-100">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div>
-                                <h3 id="totalLoncheras" class="h2 fw-bold mb-0 text-dark-nb">{{ userData.resumen?.loncheras_este_mes ?? 0 }}</h3>
-                                <p class="text-muted-dark mb-1 small">Loncheras (este mes)</p>
-                            </div>
-                            <div class="stat-icon bg-secondary text-dark-nb">
-                                <i class="fas fa-box"></i>
-                            </div>
-                        </div>
-                    </div>
-                </router-link>
-            </div>
-            <div class="col-md-4">
-                <router-link to="/app/direcciones" class="stat-card-link text-decoration-none">
-                    <div class="card p-4 card-shadow-top h-100">
-                        <div class="d-flex align-items-center justify-content-between">
-                            <div>
-                                 <h3 id="totalDirecciones" class="h2 fw-bold mb-0 text-dark-nb">{{ userData.resumen?.total_direcciones ?? 0 }}</h3>
-                                 <p class="text-muted-dark mb-1 small">Direcciones</p>
-                            </div>
-                            <div class="stat-icon bg-accent text-white">
-                                <i class="fas fa-map-marker-alt"></i>
-                            </div>
-                        </div>
-                    </div>
-                </router-link>
-            </div>
-        </div>
-        <div class="row g-4">
-            <div class="col-lg-6">
-                <div class="card p-4 card-shadow h-100">
-                    <h5 class="mb-3 fw-bold text-dark-nb">Acciones Rápidas</h5>
-                    <div class="d-grid gap-3">
-                        <router-link to="/app/crear-lonchera" class="btn btn-primary-nb py-3">
-                            <i class="fas fa-plus me-2"></i> Crear Nueva Lonchera
-                        </router-link>
-                        <router-link to="/app/hijos" class="btn btn-outline-primary-nb py-3">
-                            <i class="fas fa-child me-2"></i> Gestionar Hijos
-                        </router-link>
-                        
-                        <router-link v-if="userData.rol.nombre === 'Admin'" to="/app/admin/foods" class="btn btn-primary-dark py-3 mt-3">
-                             <i class="fas fa-cog me-2"></i> Panel de Administración
-                        </router-link>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-lg-6">
-                <div class="card p-4 card-shadow h-100">
-                    <h5 class="mb-3 fw-bold text-dark-nb">Información de Membresía</h5>
-                    <div class="d-flex justify-content-between py-2 border-bottom">
-                        <span class="fw-bold text-dark-nb">Plan Actual:</span>
-                        <span
-                          v-if="userData.membresia"
-                          :class="['badge', 'fs-6', getMembershipBadgeClass(userData.membresia.tipo)]"
-                        >
-                          {{ userData.membresia.tipo }}
-                        </span>
-                         <span v-else class="badge bg-muted-dark fs-6">N/A</span>
-                    </div>
-                    <div class="d-flex justify-content-between py-2">
-                        <span class="text-muted-dark">Límite de Direcciones:</span>
-                        <span id="maxDirecciones" v-if="userData.membresia" class="text-dark-nb">{{ userData.membresia.max_direcciones === 0 ? 'Ilimitado' : userData.membresia.max_direcciones }}</span>
-                        <span id="maxDirecciones" v-else class="text-dark-nb">N/A</span>
-                    </div>
-                     <router-link to="/app/perfil" class="btn btn-sm btn-outline-primary-nb w-100 mt-4">
-                            Ver detalles de membresía
-                    </router-link>
-                </div>
-            </div>
-        </div>
-      </div>
-
-    <div v-else class="text-center p-5 bg-light-nb">
-      <p class="text-danger">Error al cargar la información del usuario.</p>
-      <p class="text-muted-dark">Intenta <router-link to="/login">iniciar sesión</router-link> de nuevo.</p>
-    </div>
-  </main>
-</template>
-
 <style scoped>
-/* Estilos específicos para el componente */
-.stat-icon {
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2.2rem; 
-  border-radius: 50%;
-}
-.stat-card-link {
-    display: block;
-    text-decoration: none;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.stat-card-link:hover .card {
-    transform: translateY(-5px); 
-    box-shadow: var(--shadow-xl);
-    cursor: pointer;
+.dashboard-container {
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
-/* Para mantener la estética limpia como la imagen de referencia */
-.card-shadow-top {
-    box-shadow: var(--shadow-md); 
-    border: 1px solid var(--nb-border-medium);
-    background-color: var(--bg-card); 
-    border-radius: 0.75rem; 
+.dashboard-header {
+  border-bottom: 2px solid #e9ecef;
+  padding-bottom: 1rem;
 }
-.card-shadow-top:hover {
-     box-shadow: var(--shadow-lg); 
+
+.user-info .info-item label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.badge {
+  padding: 0.5em 0.75em;
+}
+
+.card {
+  border: none;
+  border-radius: 10px;
+}
+
+.card-header {
+  border-radius: 10px 10px 0 0 !important;
+  font-weight: 600;
+}
+
+.btn {
+  border-radius: 8px;
+  font-weight: 500;
+}
+
+.admin-info, .membership-info {
+  border-left: 4px solid #1F8D45;
+}
+
+.list-unstyled li {
+  padding: 0.25rem 0;
 }
 </style>

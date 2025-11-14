@@ -1,311 +1,374 @@
-﻿<script setup>
-import { ref, onMounted, computed } from 'vue';
+﻿<template>
+  <main class="flex-grow-1 p-4 bg-light">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1 class="h3">Alimentos</h1>
+        <p class="text-muted">Gestiona los alimentos del sistema</p>
+      </div>
+      <button v-if="isUserAdmin" class="btn btn-success" @click="showCreateModal = true">
+        <i class="fas fa-plus me-1"></i> Agregar Alimento
+      </button>
+    </div>
+
+    <!-- Búsqueda -->
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-8">
+            <input 
+              v-model="searchQuery" 
+              type="text" 
+              class="form-control" 
+              placeholder="Buscar alimentos por nombre..."
+              @input="searchFoods"
+            >
+          </div>
+          <div class="col-md-4">
+            <button class="btn btn-outline-secondary w-100" @click="clearFilters">
+              <i class="fas fa-times me-1"></i> Limpiar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <div v-if="isLoading" class="text-center p-5">
+      <i class="fas fa-spinner fa-spin fa-2x text-primary"></i>
+      <p class="mt-2 text-muted">Cargando alimentos...</p>
+    </div>
+
+    <!-- Tabla de Alimentos -->
+    <div v-else class="card">
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Calorías</th>
+                <th>Proteínas (g)</th>
+                <th>Carbohidratos (g)</th>
+                <th>Costo (COP)</th>
+                <th>Estado</th>
+                <th v-if="isUserAdmin">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="food in filteredFoods" :key="food.id">
+                <td>
+                  <strong>{{ food.nombre }}</strong>
+                </td>
+                <td>
+                  <span class="text-warning fw-bold">{{ food.kcal || 0 }} kcal</span>
+                </td>
+                <td>{{ food.proteinas || 0 }}g</td>
+                <td>{{ food.carbos || 0 }}g</td>
+                <td>
+                  <strong class="text-success">{{ formatPrice(food.costo) }}</strong>
+                </td>
+                <td>
+                  <span :class="food.activo ? 'badge bg-success' : 'badge bg-secondary'">
+                    {{ food.activo ? 'Activo' : 'Inactivo' }}
+                  </span>
+                </td>
+                <td v-if="isUserAdmin">
+                  <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" @click="editFood(food)" title="Editar">
+                      <i class="fas fa-edit"></i>
+                    </button>
+                    <button 
+                      class="btn" 
+                      :class="food.activo ? 'btn-outline-danger' : 'btn-outline-warning'" 
+                      @click="food.activo ? deleteFood(food) : activateFood(food)" 
+                      :title="food.activo ? 'Desactivar' : 'Activar'"
+                    >
+                      <i :class="food.activo ? 'fas fa-times' : 'fas fa-check'"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Mensaje sin resultados -->
+        <div v-if="filteredFoods.length === 0 && !isLoading" class="text-center p-5">
+          <i class="fas fa-search fa-2x text-muted mb-3"></i>
+          <h5>No se encontraron alimentos</h5>
+          <p class="text-muted">Intenta con otros términos de búsqueda</p>
+          <button v-if="isUserAdmin" class="btn btn-success mt-2" @click="showCreateModal = true">
+            <i class="fas fa-plus me-1"></i> Crear Primer Alimento
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal para Crear/Editar Alimento -->
+    <div v-if="showCreateModal" class="modal fade show d-block" style="background-color: rgba(0,0,0,0.5)">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">{{ editingFood ? 'Editar' : 'Crear' }} Alimento</h5>
+            <button type="button" class="btn-close" @click="closeModal"></button>
+          </div>
+          <div class="modal-body">
+            <form @submit.prevent="saveFood">
+              <div class="row g-3">
+                <div class="col-12">
+                  <label class="form-label">Nombre *</label>
+                  <input v-model="foodForm.nombre" type="text" class="form-control" required>
+                </div>
+                
+                <div class="col-md-4">
+                  <label class="form-label">Calorías (kcal) *</label>
+                  <input v-model.number="foodForm.kcal" type="number" class="form-control" min="0" step="0.1" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Proteínas (g) *</label>
+                  <input v-model.number="foodForm.proteinas" type="number" class="form-control" min="0" step="0.1" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Carbohidratos (g) *</label>
+                  <input v-model.number="foodForm.carbos" type="number" class="form-control" min="0" step="0.1" required>
+                </div>
+                
+                <div class="col-12">
+                  <label class="form-label">Costo (COP) *</label>
+                  <input v-model.number="foodForm.costo" type="number" class="form-control" min="0" step="100" required>
+                </div>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="closeModal">Cancelar</button>
+            <button type="button" class="btn btn-success" @click="saveFood" :disabled="saving">
+              <i v-if="saving" class="fas fa-spinner fa-spin me-1"></i>
+              {{ saving ? 'Guardando...' : (editingFood ? 'Actualizar' : 'Crear') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</template>
+
+<script setup>
+import { ref, computed, onMounted } from 'vue';
 import Swal from 'sweetalert2';
 import apiService from '@/services/api.service';
-import { isAdmin } from '@/utils/user'; // Para verificar si es admin
+import { getUserDetail, isAdmin } from '@/utils/user';
 
 const foods = ref([]);
+const filteredFoods = ref([]);
 const isLoading = ref(true);
+const saving = ref(false);
+const showCreateModal = ref(false);
+const editingFood = ref(null);
+const searchQuery = ref('');
 
-const isUserAdmin = computed(() => isAdmin()); // Verifica si el usuario logueado es Admin
+const isUserAdmin = computed(() => isAdmin());
 
-// Formato de moneda COP
-function formatCurrency(value) {
-    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(value || 0);
-}
+// Formulario de alimento - Sincronizado con backend
+const foodForm = ref({
+  nombre: '',
+  kcal: 0,
+  proteinas: 0,
+  carbos: 0,
+  costo: 0
+});
 
-// Carga los alimentos desde la API
-async function loadFoods() {
+const formatPrice = (price) => {
+  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(price || 0);
+};
+
+// Cargar alimentos
+const loadFoods = async () => {
+  try {
     isLoading.value = true;
-    try {
-        // Si es admin, carga 'all' (activos e inactivos), si no, solo 'true' (activos)
-        const filter = isUserAdmin.value ? 'all' : 'true';
-        foods.value = await apiService.get(`/foods?only_active=${filter}`);
-        isLoading.value = false;
-    } catch (error) {
-        isLoading.value = false;
-        Swal.fire('Error', error.message || 'No se pudieron cargar los alimentos', 'error');
-    }
-}
-
-// --- Funciones CRUD (ya corregidas en el backend) ---
-
-async function showAddFoodModal() {
-    // ... (Asumimos que el contenido del modal ya existe y está bien)
-    const { value: formValues } = await Swal.fire({
-        title: "Agregar Nuevo Alimento",
-        html: `
-            <input id="swal-nombre" class="swal2-input form-control" placeholder="Nombre del alimento" required>
-            <input id="swal-kcal" type="number" step="0.1" class="swal2-input form-control" placeholder="Calorías (kcal)" required>
-            <input id="swal-proteinas" type="number" step="0.1" class="swal2-input form-control" placeholder="Proteínas (g)" required>
-            <input id="swal-carbos" type="number" step="0.1" class="swal2-input form-control" placeholder="Carbohidratos (g)" required>
-            <input id="swal-costo" type="number" step="0.01" class="swal2-input form-control" placeholder="Costo Unitario (COP)" value="0.00" required>
-        `,
-        focusConfirm: false,
-        showCancelButton: true,
-        confirmButtonColor: "#4CAF50", // Verde
-        cancelButtonColor: "#DC3545", // Rojo
-        confirmButtonText: "Guardar Alimento",
-        cancelButtonText: "Cancelar",
-        preConfirm: () => {
-            const nombre = document.getElementById("swal-nombre")?.value;
-            const kcalStr = document.getElementById("swal-kcal")?.value;
-            const proteinasStr = document.getElementById("swal-proteinas")?.value;
-            const carbosStr = document.getElementById("swal-carbos")?.value;
-            const costoStr = document.getElementById("swal-costo")?.value;
-
-            // Validación robusta
-            if (!nombre || !kcalStr || !proteinasStr || !carbosStr || !costoStr) {
-                Swal.showValidationMessage("Todos los campos son requeridos.");
-                return false;
-            }
-            const kcal = parseFloat(kcalStr);
-            const proteinas = parseFloat(proteinasStr);
-            const carbos = parseFloat(carbosStr);
-            const costo = parseFloat(costoStr);
-
-            if (isNaN(kcal) || isNaN(kcal) || isNaN(proteinas) || isNaN(carbos) || isNaN(costo)) {
-                Swal.showValidationMessage("Los valores numéricos deben ser números válidos.");
-                return false;
-            }
-            if (kcal < 0 || proteinas < 0 || carbos < 0 || costo < 0) {
-                 Swal.showValidationMessage("Los valores numéricos no pueden ser negativos.");
-                return false;
-            }
-            return { nombre, kcal, proteinas, carbos, costo };
-        }
-    });
-
-    if (formValues) {
-        try {
-            Swal.showLoading();
-            await apiService.post('/foods', formValues); // Llama a la API para crear
-            Swal.close();
-            Swal.fire('Éxito', 'Alimento agregado correctamente', 'success');
-            await loadFoods(); // Recargar la lista de alimentos
-        } catch (error) {
-            Swal.close();
-            Swal.fire('Error', error.message || 'No se pudo agregar el alimento', 'error');
-        }
-    }
-}
-
-async function showEditFoodModal(foodId) {
-    const foodToEdit = foods.value.find(f => f.id === foodId);
-    if (!foodToEdit) {
-        Swal.fire("Error", "No se encontró el alimento para editar.", "error");
-        return;
-    }
-
-    const { value: formValues } = await Swal.fire({
-        title: "Editar Alimento",
-        html: `
-            <input id="swal-nombre" class="swal2-input form-control" placeholder="Nombre" value="${foodToEdit.nombre}" required>
-            <input id="swal-kcal" type="number" step="0.1" class="swal2-input form-control" placeholder="Calorías (kcal)" value="${foodToEdit.kcal}" required>
-            <input id="swal-proteinas" type="number" step="0.1" class="swal2-input form-control" placeholder="Proteínas (g)" value="${foodToEdit.proteinas}" required>
-            <input id="swal-carbos" type="number" step="0.1" class="swal2-input form-control" placeholder="Carbohidratos (g)" value="${foodToEdit.carbos}" required>
-            <input id="swal-costo" type="number" step="0.01" class="swal2-input form-control" placeholder="Costo Unitario (COP)" value="${foodToEdit.costo?.toFixed(2) ?? '0.00'}" required>
-            <div class="form-check mt-3 text-start">
-              <input class="form-check-input" type="checkbox" id="swal-activo" ${foodToEdit.activo ? 'checked' : ''}>
-              <label class="form-check-label" for="swal-activo">
-                Activo (disponible para seleccionar)
-              </label>
-            </div>
-        `,
-        focusConfirm: false,
-        showCancelButton: true,
-        confirmButtonColor: "#4CAF50", // Verde
-        cancelButtonColor: "#DC3545", // Rojo
-        confirmButtonText: "Guardar Cambios",
-        cancelButtonText: "Cancelar",
-        preConfirm: () => {
-            const nombre = document.getElementById("swal-nombre")?.value;
-            const kcalStr = document.getElementById("swal-kcal")?.value;
-            const proteinasStr = document.getElementById("swal-proteinas")?.value;
-            const carbosStr = document.getElementById("swal-carbos")?.value;
-            const costoStr = document.getElementById("swal-costo")?.value;
-            const activo = document.getElementById("swal-activo")?.checked;
-
-             if (!nombre || !kcalStr || !proteinasStr || !carbosStr || !costoStr) {
-                Swal.showValidationMessage("Todos los campos son requeridos.");
-                return false;
-            }
-            const kcal = parseFloat(kcalStr);
-            const proteinas = parseFloat(proteinasStr);
-            const carbos = parseFloat(carbosStr);
-            const costo = parseFloat(costoStr);
-
-             if (isNaN(kcal) || isNaN(proteinas) || isNaN(carbos) || isNaN(costo)) {
-                Swal.showValidationMessage("Los valores numéricos deben ser números válidos.");
-                return false;
-            }
-             if (kcal < 0 || proteinas < 0 || carbos < 0 || costo < 0) {
-                 Swal.showValidationMessage("Los valores numéricos no pueden ser negativos.");
-                return false;
-            }
-            return { nombre, kcal, proteinas, carbos, costo, activo }; // Incluye el estado 'activo'
-        }
-    });
-
-    if (formValues) {
-        try {
-            Swal.showLoading();
-            await apiService.patch(`/foods/${foodId}`, formValues); // Llama a la API con PATCH
-            Swal.close();
-            Swal.fire("Éxito", "Alimento actualizado correctamente", "success");
-            await loadFoods(); // Recargar la lista
-        } catch (error) {
-            Swal.close();
-            Swal.fire("Error", error.message || 'No se pudo actualizar el alimento', "error");
-        }
-    }
-}
-
-async function deleteFood(foodId) {
-    const foodToDelete = foods.value.find(f => f.id === foodId);
-     if (!foodToDelete) return;
-
-    // Diferente mensaje si ya está inactivo (para reactivar)
-    const isActive = foodToDelete.activo;
-    const confirmTitle = isActive ? "¿Desactivar Alimento?" : "¿Reactivar Alimento?";
-    const confirmText = isActive
-        ? "Esta acción marcará el alimento como inactivo y no se podrá seleccionar en nuevas loncheras."
-        : "Esta acción volverá a poner el alimento como activo y disponible.";
-    const confirmButton = isActive ? 'Sí, desactivar' : 'Sí, reactivar';
-    const successMessage = isActive ? 'Alimento desactivado' : 'Alimento reactivado';
-
-    const result = await Swal.fire({
-        title: confirmTitle,
-        text: confirmText,
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: isActive ? '#DC3545' : '#4CAF50', // Rojo para desactivar, Verde para activar
-        cancelButtonColor: '#6c757d', // Gris
-        confirmButtonText: confirmButton,
-        cancelButtonText: 'Cancelar'
-    });
-
-    if (result.isConfirmed) {
-        try {
-            Swal.showLoading();
-            if (isActive) {
-                 await apiService.delete(`/foods/${foodId}`); // El backend hace soft delete
-            } else {
-                 await apiService.patch(`/foods/${foodId}`, { activo: true }); // Reactivamos
-            }
-            Swal.close();
-            Swal.fire("Éxito", `${successMessage} correctamente`, "success");
-            await loadFoods(); // Recargar la lista para que refleje el cambio de estado
-        } catch (error) {
-            Swal.close();
-            Swal.fire("Error", error.message || `No se pudo ${isActive ? 'desactivar' : 'reactivar'} el alimento`, "error");
-        }
-    }
-}
-
-async function viewFoodDetail(foodId) {
-    const food = foods.value.find(f => f.id === foodId);
-    if (!food) return;
-
+    console.log('📥 Cargando alimentos...');
+    
+    const foodList = await apiService.get('/foods');
+    console.log('✅ Alimentos cargados:', foodList);
+    
+    foods.value = foodList;
+    filteredFoods.value = foodList;
+    
+  } catch (error) {
+    console.error('❌ Error cargando alimentos:', error);
     Swal.fire({
-        title: food.nombre,
-        html: `
-            <div class="text-start">
-                <p><strong>Calorías:</strong> ${food.kcal} kcal</p>
-                <p><strong>Proteínas:</strong> ${food.proteinas} g</p>
-                <p><strong>Carbohidratos:</strong> ${food.carbos} g</p>
-                <p><strong>Costo por Unidad:</strong> ${formatCurrency(food.costo)}</p>
-                <p><strong>Estado:</strong> ${food.activo ? '<span class="badge bg-success">Activo</span>' : '<span class="badge bg-danger">Inactivo</span>'}</p>
-            </div>
-        `,
-        confirmButtonColor: "#4CAF50" // Verde
+      icon: 'error',
+      title: 'Error',
+      text: error.message || 'No se pudieron cargar los alimentos'
     });
-}
+    foods.value = [];
+    filteredFoods.value = [];
+  } finally {
+    isLoading.value = false;
+  }
+};
 
+// Buscar alimentos
+const searchFoods = () => {
+  if (!searchQuery.value) {
+    filteredFoods.value = foods.value;
+    return;
+  }
+
+  const query = searchQuery.value.toLowerCase();
+  filteredFoods.value = foods.value.filter(food => 
+    food.nombre.toLowerCase().includes(query)
+  );
+};
+
+const clearFilters = () => {
+  searchQuery.value = '';
+  filteredFoods.value = foods.value;
+};
+
+// CRUD Operations
+const createFood = () => {
+  editingFood.value = null;
+  foodForm.value = {
+    nombre: '',
+    kcal: 0,
+    proteinas: 0,
+    carbos: 0,
+    costo: 0
+  };
+  showCreateModal.value = true;
+};
+
+const editFood = (food) => {
+  editingFood.value = food;
+  foodForm.value = { ...food };
+  showCreateModal.value = true;
+};
+
+const saveFood = async () => {
+  try {
+    saving.value = true;
+    console.log('💾 Guardando alimento:', foodForm.value);
+
+    // Validaciones básicas
+    if (!foodForm.value.nombre.trim()) {
+      throw new Error('El nombre es requerido');
+    }
+    if (foodForm.value.kcal <= 0) {
+      throw new Error('Las calorías deben ser mayores a 0');
+    }
+    if (foodForm.value.costo < 0) {
+      throw new Error('El costo no puede ser negativo');
+    }
+
+    if (editingFood.value) {
+      // ✅ CORREGIDO: Usar PATCH en vez de PUT
+      await apiService.patch(`/foods/${editingFood.value.id}`, foodForm.value);
+      Swal.fire('¡Éxito!', 'Alimento actualizado correctamente', 'success');
+    } else {
+      // Crear nuevo alimento
+      await apiService.post('/foods', foodForm.value);
+      Swal.fire('¡Éxito!', 'Alimento creado correctamente', 'success');
+    }
+
+    await loadFoods();
+    closeModal();
+    
+  } catch (error) {
+    console.error('❌ Error guardando alimento:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: error.message || 'No se pudo guardar el alimento'
+    });
+  } finally {
+    saving.value = false;
+  }
+};
+
+const deleteFood = async (food) => {
+  const result = await Swal.fire({
+    title: `¿Desactivar "${food.nombre}"?`,
+    text: 'El alimento ya no estará disponible para nuevas loncheras',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#d33',
+    cancelButtonColor: '#3085d6',
+    confirmButtonText: 'Sí, desactivar',
+    cancelButtonText: 'Cancelar'
+  });
+
+  if (result.isConfirmed) {
+    try {
+      Swal.showLoading();
+      console.log('🗑️ Desactivando alimento:', food.id);
+      
+      await apiService.delete(`/foods/${food.id}`);
+      
+      Swal.close();
+      Swal.fire('¡Desactivado!', 'Alimento desactivado correctamente', 'success');
+      await loadFoods();
+      
+    } catch (error) {
+      Swal.close();
+      console.error('❌ Error desactivando alimento:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: error.message || 'No se pudo desactivar el alimento'
+      });
+    }
+  }
+};
+
+const activateFood = async (food) => {
+  try {
+    Swal.showLoading();
+    
+    // ✅ CORREGIDO: Usar PATCH para activar
+    await apiService.patch(`/foods/${food.id}`, { activo: true });
+    
+    Swal.close();
+    Swal.fire('¡Activado!', 'Alimento activado correctamente', 'success');
+    await loadFoods();
+    
+  } catch (error) {
+    Swal.close();
+    console.error('❌ Error activando alimento:', error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: error.message || 'No se pudo activar el alimento'
+    });
+  }
+};
+
+const closeModal = () => {
+  showCreateModal.value = false;
+  editingFood.value = null;
+};
 
 onMounted(() => {
-    loadFoods();
+  loadFoods();
 });
 </script>
 
-<template>
-    <main class="flex-grow-1 p-4 bg-light">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <div>
-                <h1 class="h3">Catalogo de Alimentos</h1>
-                <p class="text-muted">Consulta la informacion nutricional y el costo unitario de cada alimento.</p>
-            </div>
-            <button v-if="isUserAdmin" class="btn btn-primary-nb" @click="showAddFoodModal">
-                <i class="fas fa-plus me-1"></i> Agregar Alimento
-            </button>
-        </div>
-
-        <div class="card p-4 card-shadow">
-            <div v-if="isLoading" class="text-center p-5">
-                <i class="fas fa-spinner fa-spin fa-2x text-primary-nb"></i>
-                <p class="mt-2 text-muted">Cargando catalogo...</p>
-            </div>
-
-            <div v-else-if="foods.length === 0" class="text-center p-5">
-                 <p class="text-muted">No hay alimentos registrados{{ isUserAdmin ? '' : ' activos' }}.</p>
-                 <button v-if="isUserAdmin" class="btn btn-primary-nb mt-3" @click="showAddFoodModal">
-                    <i class="fas fa-plus me-1"></i> Agregar el Primer Alimento
-                </button>
-            </div>
-
-            <div v-else class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Calorías (kcal)</th>
-                            <th>Proteínas (g)</th>
-                            <th>Carbohidratos (g)</th>
-                            <th>Costo Unitario</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="foodsTableBody">
-                        <tr v-for="food in foods" :key="food.id" :class="{'table-secondary': !food.activo}">
-                            <td>{{ food.nombre }}</td>
-                            <td class="text-end">{{ food.kcal?.toFixed(1) ?? 'N/A' }}</td>
-                            <td class="text-end">{{ food.proteinas?.toFixed(1) ?? 'N/A' }} g</td>
-                            <td class="text-end">{{ food.carbos?.toFixed(1) ?? 'N/A' }} g</td>
-                            <td class="text-end">{{ formatCurrency(food.costo) }}</td>
-                            <td>
-                                <span v-if="food.activo" class="badge bg-success">Activo</span>
-                                <span v-else class="badge bg-danger">Inactivo</span>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-info me-1" title="Ver Detalle" @click="viewFoodDetail(food.id)">
-                                    <i class="fas fa-eye"></i>
-                                    <span class="d-none d-md-inline"> Ver Detalle</span>
-                                </button>
-                                <span v-if="isUserAdmin">
-                                    <button class="btn btn-sm btn-outline-warning me-1" title="Editar" @click="showEditFoodModal(food.id)"><i class="fas fa-edit"></i></button>
-                                    <button
-                                        :class="['btn', 'btn-sm', food.activo ? 'btn-outline-danger' : 'btn-outline-secondary']"
-                                        :title="food.activo ? 'Desactivar' : 'Reactivar'"
-                                        @click="deleteFood(food.id)">
-                                        <i :class="['fas', food.activo ? 'fa-trash-alt' : 'fa-undo']"></i>
-                                    </button>
-                                </span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </main>
-</template>
-
 <style scoped>
-/* Estilos adicionales si son necesarios */
-.table td, .table th {
-    vertical-align: middle;
+.modal {
+  background-color: rgba(0,0,0,0.5);
 }
-.text-end {
-    text-align: right;
+
+.table th {
+  background-color: #f8f9fa;
+  border-top: none;
+  font-weight: 600;
+}
+
+.badge {
+  font-size: 0.75em;
+}
+
+.btn-group-sm > .btn {
+  padding: 0.25rem 0.5rem;
 }
 </style>
