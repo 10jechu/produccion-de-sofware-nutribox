@@ -11,12 +11,8 @@ const menus = ref([]);
 const userData = ref(null);
 const isLoading = ref(true);
 
-// ### INICIO DE LA MODIFICACIÓN ###
-// Básico ('Free') puede ver la página
 const canAccessPage = computed(() => hasRequiredMembership('Free')); 
-// Estándar puede usar el botón "Agregar"
 const canAddMenu = computed(() => hasRequiredMembership('Estandar'));
-// ### FIN DE LA MODIFICACIÓN ###
 
 function formatCurrency(value) {
     const numberValue = Number(value);
@@ -29,7 +25,6 @@ async function loadMenus() {
     userData.value = getUserDetail();
     if (!userData.value) { authService.logout(); return; }
     
-    // No bloquees la carga si no es estándar, solo el botón
     if (!canAccessPage.value) { isLoading.value = false; return; }
 
     try {
@@ -42,8 +37,52 @@ async function loadMenus() {
     }
 }
 
+// ### INICIO DE LA MODIFICACIÓN ###
+// Nueva función para mostrar el detalle (Recetario)
+async function showMenuDetail(menu) {
+    if (!menu) return;
+
+    // 1. Formatear lista de items
+    const itemsList = menu.items.map(item =>
+        '<li class="list-group-item d-flex justify-content-between align-items-center">' +
+            '<span>' + (item.alimento?.nombre || 'Alimento ' + item.alimento_id) + '</span>' +
+            '<span class="badge bg-light text-dark">' + item.cantidad + 'x - ' + (item.alimento?.kcal * item.cantidad).toFixed(0) + ' kcal</span>' +
+        '</li>'
+    ).join("");
+
+    // 2. Formatear nutrición total
+    const nutricion = menu.nutricion_total || {};
+    const costo = menu.costo_total || 0;
+
+    // 3. Construir el HTML del modal
+    const swalHtml =
+        '<div class="text-start mt-3">' +
+            '<p class="text-muted">' + (menu.descripcion || 'Descripción no disponible.') + '</p>' +
+
+            '<h5 class="mt-4 mb-2 border-bottom pb-2">Alimentos Incluidos (' + menu.items.length + ')</h5>' +
+            '<ul class="list-group list-group-flush">' + itemsList + '</ul>' +
+
+            '<h5 class="mt-4 mb-2 border-bottom pb-2">Nutrición y Costo Total</h5>' +
+            '<ul class="list-group list-group-flush">' +
+                '<li class="list-group-item d-flex justify-content-between px-0">Calorías: <strong class="text-danger">' + (nutricion.calorias?.toFixed(1) || 0) + ' kcal</strong></li>' +
+                '<li class="list-group-item d-flex justify-content-between px-0">Proteínas: <strong>' + (nutricion.proteinas?.toFixed(1) || 0) + ' g</strong></li>' +
+                '<li class="list-group-item d-flex justify-content-between px-0">Carbohidratos: <strong>' + (nutricion.carbohidratos?.toFixed(1) || 0) + ' g</strong></li>' +
+                '<li class="list-group-item d-flex justify-content-between px-0">Costo Total: <strong>' + formatCurrency(costo) + '</strong></li>' +
+            '</ul>' +
+        '</div>';
+
+    // 4. Mostrar el modal
+    Swal.fire({
+        title: 'Detalle: ' + menu.nombre,
+        html: swalHtml,
+        width: 600,
+        confirmButtonColor: "#4CAF50",
+        confirmButtonText: 'Cerrar'
+    });
+}
+// ### FIN DE LA MODIFICACIÓN ###
+
 async function addMenuToProfile(menuDetail) {
-     // Esta validación ya está correcta, comprueba 'Estandar'
      if (!canAddMenu.value) {
          Swal.fire('Función Estándar', 'Necesitas un plan Estándar o Premium para agregar menús a tu perfil.', 'info');
          return;
@@ -123,6 +162,9 @@ onMounted(() => {
                 <div class="card h-100 card-shadow">
                     <div class="card-body d-flex flex-column">
                         <h5 class="card-title fw-bold">{{ menu.nombre }}</h5>
+                        
+                        <p class="card-text text-muted">{{ menu.descripcion }}</p>
+
                         <p class="card-text text-muted small">
                             {{ menu.items.length }} items |
                             {{ menu.nutricion_total?.calorias?.toFixed(0) || 0 }} kcal |
@@ -135,9 +177,17 @@ onMounted(() => {
                            </li>
                            <li v-if="menu.items.length > 3" class="text-muted">... y más</li>
                         </ul>
-                        <div class="mt-auto">
+                        
+                        <div class="mt-auto d-grid gap-2">
                             <button 
-                                :class="['btn', 'w-100', canAddMenu ? 'btn-primary-nb' : 'btn-secondary']" 
+                                class="btn btn-sm btn-outline-primary"
+                                @click="showMenuDetail(menu)"
+                            >
+                                <i class="fas fa-eye me-1"></i> Ver Detalle (Receta)
+                            </button>
+                        
+                            <button 
+                                :class="['btn', 'btn-sm', canAddMenu ? 'btn-primary-nb' : 'btn-secondary']" 
                                 @click="addMenuToProfile(menu)"
                                 :disabled="!canAddMenu"
                                 :title="canAddMenu ? 'Agregar a Mis Loncheras' : 'Requiere Plan Estándar o Premium'"
@@ -145,7 +195,7 @@ onMounted(() => {
                                 {{ canAddMenu ? 'Agregar a Mis Loncheras' : 'Requiere Estándar' }}
                             </button>
                         </div>
-                    </div>
+                        </div>
                 </div>
             </div>
         </div>

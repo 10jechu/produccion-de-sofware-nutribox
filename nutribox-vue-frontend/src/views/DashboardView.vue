@@ -1,23 +1,23 @@
-<script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router'; // Mantén esto si lo usas
-import { getUserDetail } from '@/utils/user';
-import authService from '@/services/auth.service'; // Mantén esto si lo usas
+﻿<script setup>
+import { ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { getUserDetail, hasRequiredMembership } from '@/utils/user';
+import authService from '@/services/auth.service';
 
-const router = useRouter(); // Asegúrate de que esto siga aquí si lo necesitas en el futuro
+const router = useRouter();
 const userData = ref(null);
 const isLoading = ref(true);
 
-// LA FUNCIÓN logout YA NO VA AQUÍ, ESTÁ EN AppLayout.vue
+// --- MODIFICADO: Renombrado para más claridad ---
+const canSeeEstandarFeatures = computed(() => hasRequiredMembership('Estandar'));
 
 const loadDashboard = async () => {
   isLoading.value = true;
   const user = getUserDetail();
 
   if (!user) {
-    // Si no hay usuario, redirige a login (manejado por authService si es necesario)
-    authService.logout(); // Esto ya redirige
-    router.push('/login'); // Doble seguridad
+    authService.logout();
+    router.push('/login');
     return;
   }
   userData.value = user;
@@ -27,7 +27,7 @@ const loadDashboard = async () => {
 const getMembershipBadgeClass = (tipo) => {
   if (tipo === 'Premium') {
     return 'bg-warning text-dark';
-  } else if (tipo === 'Estandar') { // Asegúrate de que coincida con el backend ('Estandar' o 'Estándar')
+  } else if (tipo === 'Estandar') { 
     return 'bg-info';
   } else {
     return 'bg-secondary';
@@ -53,7 +53,7 @@ onMounted(() => {
           <p class="text-muted">Aquí tienes un resumen de tu actividad</p>
       </div>
 
-      <div class="row g-4 mb-4">
+      <div v-if="canSeeEstandarFeatures" class="row g-4 mb-4">
           <div class="col-md-4">
               <div class="card p-3 card-shadow">
                   <div class="d-flex align-items-center">
@@ -61,7 +61,7 @@ onMounted(() => {
                           <i class="fas fa-child"></i>
                       </div>
                       <div>
-                          <h3 class="h2 fw-bold mb-0">{{ userData.resumen?.total_hijos || 0 }}</h3>
+                          <h3 id="totalHijos" class="h2 fw-bold mb-0">{{ userData.resumen?.total_hijos || 0 }}</h3>
                           <p class="text-muted mb-0">Hijos Registrados</p>
                       </div>
                   </div>
@@ -74,7 +74,7 @@ onMounted(() => {
                           <i class="fas fa-box"></i>
                       </div>
                       <div>
-                          <h3 class="h2 fw-bold mb-0">{{ userData.resumen?.loncheras_este_mes || 0 }}</h3>
+                          <h3 id="totalLoncheras" class="h2 fw-bold mb-0">{{ userData.resumen?.loncheras_este_mes || 0 }}</h3>
                           <p class="text-muted mb-0">Loncheras (este mes)</p>
                       </div>
                   </div>
@@ -87,7 +87,7 @@ onMounted(() => {
                           <i class="fas fa-map-marker-alt"></i>
                       </div>
                       <div>
-                          <h3 class="h2 fw-bold mb-0">{{ userData.resumen?.total_direcciones || 0 }}</h3>
+                          <h3 id="totalDirecciones" class="h2 fw-bold mb-0">{{ userData.resumen?.total_direcciones || 0 }}</h3>
                           <p class="text-muted mb-0">Direcciones</p>
                       </div>
                   </div>
@@ -95,23 +95,23 @@ onMounted(() => {
           </div>
       </div>
 
-      <div class="row g-4">
-          <div class="col-md-6">
-              <div class="card p-4 card-shadow">
-                  <h5 class="mb-3 fw-bold">Acciones Rápidas</h5>
-                  <div class="d-grid gap-2">
-                      <router-link to="/crear-lonchera" class="btn btn-primary-nb py-2">
-                          <i class="fas fa-plus me-2"></i> Crear Nueva Lonchera
-                      </router-link>
-                      <router-link to="/hijos" class="btn btn-outline-primary py-2">
-                          <i class="fas fa-child me-2"></i> Gestionar Hijos
-                      </router-link>
-                  </div>
+      <div v-else class="row g-4 mb-4">
+          <div class="col-12">
+              <div class="card p-5 text-center card-shadow h-100">
+                  <i class="fas fa-lock text-warning mb-3" style="font-size: 48px;"></i>
+                  <h3 class="h4">Funciones de Plan Estándar o Premium</h3>
+                  <p class="text-muted mb-4">
+                      Para gestionar hijos, direcciones y crear loncheras, necesitas actualizar tu plan.
+                      <br>¡Puedes empezar explorando nuestro recetario en la sección "Menús"!
+                  </p>
+                  <button class="btn btn-warning text-dark mx-auto" style="width: 200px;" disabled>Ver Planes</button>
               </div>
           </div>
+      </div>
 
+      <div class="row g-4">
           <div class="col-md-6">
-              <div class="card p-4 card-shadow">
+              <div class="card p-4 card-shadow h-100">
                   <h5 class="mb-3 fw-bold">Información de Membresía</h5>
                   <div class="d-flex justify-content-between mb-2">
                       <span class="fw-bold">Plan Actual:</span>
@@ -125,14 +125,39 @@ onMounted(() => {
                   </div>
                   <div class="d-flex justify-content-between">
                       <span class="text-muted">Límite de Direcciones:</span>
-                      <span>{{ userData.membresia ? (userData.membresia.max_direcciones === 0 ? 'Ilimitado' : userData.membresia.max_direcciones) : '-' }}</span>
+                      <span>{{ userData.membresia ? userData.membresia.max_direcciones : '-' }}</span>
                   </div>
                    <router-link to="/perfil" class="btn btn-sm btn-outline-secondary w-100 mt-4">
                           Ver detalles de membresía
                   </router-link>
               </div>
           </div>
-      </div>
+          
+          <div class="col-md-6">
+              <div v-if="canSeeEstandarFeatures" class="card p-4 card-shadow h-100">
+                  <h5 class="mb-3 fw-bold">Acciones Rápidas</h5>
+                  <div class="d-grid gap-2">
+                      <router-link to="/crear-lonchera" class="btn btn-primary-nb py-2">
+                          <i class="fas fa-plus me-2"></i> Crear Nueva Lonchera
+                      </router-link>
+                      <router-link to="/hijos" class="btn btn-outline-primary py-2">
+                          <i class="fas fa-child me-2"></i> Gestionar Hijos
+                      </router-link>
+                  </div>
+              </div>
+              
+              <div v-else class="card p-4 card-shadow h-100 text-center d-flex flex-column justify-content-center">
+                  <i class="fas fa-book-open text-primary-nb mb-3" style="font-size: 48px;"></i>
+                  <h5 class="mb-3 fw-bold">Explora los Menús</h5>
+                  <p class="text-muted mb-4">
+                      Tu plan "Free" te da acceso de lectura a todos nuestros menús predeterminados.
+                  </p>
+                  <router-link to="/menus" class="btn btn-primary-nb mt-auto">
+                        <i class="fas fa-eye me-2"></i> Ver Menús (Recetario)
+                  </router-link>
+              </div>
+          </div>
+          </div>
     </div>
 
     <div v-else class="text-center p-5">
@@ -142,7 +167,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* Los estilos específicos del sidebar se BORRARON. Se usan los globales de main.css */
 .stat-icon {
     width: 60px;
     height: 60px;

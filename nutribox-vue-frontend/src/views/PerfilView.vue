@@ -1,8 +1,8 @@
-<script setup>
+﻿<script setup>
 import { ref, onMounted, computed } from 'vue';
 import Swal from 'sweetalert2';
 import apiService from '@/services/api.service';
-import { getUserDetail } from '@/utils/user';
+import { getUserDetail, hasRequiredMembership } from '@/utils/user'; 
 import authService from '@/services/auth.service';
 import { useRouter } from 'vue-router';
 
@@ -10,10 +10,12 @@ const userData = ref(null);
 const isLoading = ref(true);
 const router = useRouter();
 
+const canSeeSummary = computed(() => hasRequiredMembership('Estandar'));
+
 const getMembershipBadgeClass = (tipo) => {
     if (tipo === 'Premium') {
         return 'bg-warning text-dark';
-    } else if (tipo === 'Estandar') {
+    } else if (tipo === 'Estandar') { 
         return 'bg-info';
     } else {
         return 'bg-secondary';
@@ -29,7 +31,6 @@ const loadProfile = async () => {
     }
     
     try {
-        // SINTAXIS CORREGIDA: Concatenacion
         const freshDetail = await apiService.get('/users/' + user.id + '/detail');
         authService.saveUserDetail(freshDetail); 
         userData.value = freshDetail;
@@ -64,7 +65,7 @@ onMounted(() => {
 
         <div v-else-if="userData" class="row g-4">
             <div class="col-lg-6">
-                <div class="card p-4 card-shadow">
+                <div class="card p-4 card-shadow h-100">
                     <h5 class="card-title fw-bold mb-3">Informacion Personal y Cuenta</h5>
                     <div class="text-center mb-4">
                         <div class="rounded-circle bg-light d-inline-block p-4 mb-3">
@@ -86,7 +87,7 @@ onMounted(() => {
             </div>
             
             <div class="col-lg-6">
-                <div class="card p-4 card-shadow">
+                <div v-if="canSeeSummary" class="card p-4 card-shadow h-100">
                     <h5 class="card-title fw-bold mb-3">Resumen y Direcciones</h5>
                     <div class="d-flex justify-content-between py-2 border-bottom">
                         <span>Total Hijos:</span>
@@ -94,15 +95,24 @@ onMounted(() => {
                     </div>
                     <div class="d-flex justify-content-between py-2 border-bottom">
                         <span>Direcciones Registradas:</span>
-                        <strong id="totalDirecciones">{{ userData.resumen.total_direcciones }} / {{ userData.membresia.max_direcciones === 0 ? '8' : userData.membresia.max_direcciones }}</strong>
+                        <strong id="totalDirecciones">{{ userData.resumen.total_direcciones }} / {{ userData.membresia.max_direcciones === 0 ? 'Ilimitado' : userData.membresia.max_direcciones }}</strong>
                     </div>
 
                     <router-link to="/direcciones" class="btn btn-sm btn-primary-nb w-100 mt-4">
                         Gestionar Direcciones
                     </router-link>
                 </div>
+
+                <div v-else class="card p-5 text-center card-shadow h-100">
+                     <i class="fas fa-lock text-warning mb-3" style="font-size: 48px;"></i>
+                     <h3 class="h4">Función de Plan Estándar</h3>
+                     <p class="text-muted mb-4">
+                         La gestión de hijos y direcciones está disponible en los planes Estándar y Premium.
+                     </p>
+                     <button class="btn btn-warning text-dark" disabled>Ver Planes</button>
+                </div>
             </div>
-        </div>
+            </div>
     </main>
 </template>
 

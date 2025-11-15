@@ -23,24 +23,24 @@ const router = createRouter({
     { path: '/dashboard', name: 'dashboard', component: DashboardView, meta: { requiresAuth: true } },
     { path: '/perfil', name: 'perfil', component: PerfilView, meta: { requiresAuth: true } },
     
-    { path: '/hijos', name: 'hijos', component: HijosView, meta: { requiresAuth: true } },
-    { path: '/direcciones', name: 'direcciones', component: DireccionesView, meta: { requiresAuth: true } },
-    
     // ### INICIO DE LA MODIFICACIÓN ###
-    // Corregido: 'Premium' en lugar de 'Estandar' para cumplir con la tabla
-    { path: '/crear-lonchera', name: 'crear-lonchera', component: CrearLoncheraView, meta: { requiresAuth: true, requiredMembership: 'Premium' } },
-    // ### FIN DE LA MODIFICACIÓN ###
-    
-    { path: '/mis-loncheras', name: 'mis-loncheras', component: LoncherasView, meta: { requiresAuth: true } },
-    { path: '/menus', name: 'menus', component: MenusView, meta: { requiresAuth: true } }, // Básico puede ver la pág.
-    
-    { path: '/restricciones', name: 'restricciones', component: RestriccionesView, meta: { requiresAuth: true, requiredMembership: 'Premium' } },
+    // Rutas ahora requieren 'Estandar'
+    { path: '/hijos', name: 'hijos', component: HijosView, meta: { requiresAuth: true, requiredMembership: 'Estandar' } },
+    { path: '/direcciones', name: 'direcciones', component: DireccionesView, meta: { requiresAuth: true, requiredMembership: 'Estandar' } },
+    { path: '/mis-loncheras', name: 'mis-loncheras', component: LoncherasView, meta: { requiresAuth: true, requiredMembership: 'Estandar' } },
     { path: '/estadisticas', name: 'estadisticas', component: EstadisticasView, meta: { requiresAuth: true, requiredMembership: 'Estandar' } },
-    
-    { path: '/alimentos', name: 'alimentos', component: AlimentosView, meta: { requiresAuth: true } }, // Básico puede ver
-    
-    { path: '/admin/foods', name: 'admin-foods', component: AdminView, meta: { requiresAuth: true, requiresAdmin: true } },
+    { path: '/alimentos', name: 'alimentos', component: AlimentosView, meta: { requiresAuth: true, requiredMembership: 'Estandar' } },
 
+    // Rutas Premium (sin cambios)
+    { path: '/crear-lonchera', name: 'crear-lonchera', component: CrearLoncheraView, meta: { requiresAuth: true, requiredMembership: 'Premium' } },
+    { path: '/restricciones', name: 'restricciones', component: RestriccionesView, meta: { requiresAuth: true, requiredMembership: 'Premium' } },
+
+    // Rutas Básicas (sin cambios)
+    { path: '/menus', name: 'menus', component: MenusView, meta: { requiresAuth: true } }, 
+    
+    // Admin (sin cambios)
+    { path: '/admin/foods', name: 'admin-foods', component: AdminView, meta: { requiresAuth: true, requiresAdmin: true } },
+    // ### FIN DE LA MODIFICACIÓN ###
 
     { path: '/', redirect: '/dashboard' }, 
     { path: '/:pathMatch(.*)*', redirect: '/dashboard' } 
