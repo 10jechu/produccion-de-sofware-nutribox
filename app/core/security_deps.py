@@ -1,47 +1,49 @@
-# <<<<<<<<<< COMIENZA CÓDIGO para el NUEVO archivo: app/core/security_deps.py >>>>>>>>>>
+﻿from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy.orm import Session
+from app.core.deps import get_db
+from app.core.security import verify_token
+from app.db.models.core_models import Usuario
 
-from fastapi import Depends, HTTPException, status
-from app.db.models.core_models import Usuario, Rol, Membresia # Importa modelos necesarios
+security = HTTPBearer()
 
-# IMPORTANTE: Importa get_current_user desde el archivo original deps.py
-from app.core.deps import get_current_user
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)) -> Usuario:
+    token = credentials.credentials
+    payload = verify_token(token)
+    if not payload:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token inválido")
+    
+    user = db.query(Usuario).filter(Usuario.id == int(payload.get("sub"))).first()
+    if not user or not user.activo:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuario no encontrado o inactivo")
+    
+    return user
 
-# --- Dependencia para verificar si el usuario es Administrador ---
 def get_current_admin_user(current_user: Usuario = Depends(get_current_user)) -> Usuario:
-    if not current_user.rol or current_user.rol.nombre != "Admin": # Cambia 'Admin' si es necesario
+    if current_user.rol.nombre != "Admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Se requieren permisos de administrador")
+    return current_user
+
+def get_current_premium_user(current_user: Usuario = Depends(get_current_user)) -> Usuario:
+    "Verifica que el usuario tenga membresía Premium"
+    print(f"🔍 DEBUG: Verificando membresía - Usuario: {current_user.email}, Membresía: {current_user.membresia.tipo}")
+    
+    # Solo permitir si es Premium (no Admin)
+    if current_user.membresia.tipo != "Premium":
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acción permitida solo para administradores"
+            status_code=status.HTTP_403_FORBIDDEN, 
+            detail=f"Se requiere plan Premium para acceder a esta función. Tu plan actual: {current_user.membresia.tipo}"
         )
     return current_user
 
-# --- Dependencia para verificar si es Usuario Principal (Padre/Madre) ---
-# (Opcional, si la necesitas)
-def get_current_principal_user(current_user: Usuario = Depends(get_current_user)) -> Usuario:
-    allowed_roles = {"Usuario Principal", "Usuario"} # Ajusta según tu BD
-    if not current_user.rol or current_user.rol.nombre not in allowed_roles:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Acción permitida solo para usuarios principales (Padres/Madres)"
-        )
+def get_current_estandar_user(current_user: Usuario = Depends(get_current_user)) -> Usuario:
+    "Verifica que el usuario tenga membresía Estándar o Premium"
+    if current_user.membresia.tipo not in ["Estandar", "Premium"]:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Se requiere plan Estándar o Premium para acceder a esta función")
     return current_user
 
-# --- Dependencia Fábrica para verificar Membresía Mínima ---
-def require_membership(required_level: str):
-    tiers = {"Básico": 0, "Free": 0, "Estándar": 1, "Estandar": 1, "Premium": 2}
-
-    async def _check_membership(current_user: Usuario = Depends(get_current_user)) -> Usuario:
-        user_level_name = current_user.membresia.tipo if current_user.membresia else "Free"
-        user_tier = tiers.get(user_level_name, 0)
-        required_tier = tiers.get(required_level, 0)
-
-        if user_tier < required_tier:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Esta acción requiere membresía '{required_level}' o superior."
-            )
-        return current_user
-
-    return _check_membership
-
-# <<<<<<<<<< FIN CÓDIGO para app/core/security_deps.py >>>>>>>>>>
+def get_current_free_user(current_user: Usuario = Depends(get_current_user)) -> Usuario:
+    "Verifica que el usuario tenga membresía Free"
+    if current_user.membresia.tipo != "Free":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Esta función es solo para usuarios Free")
+    return current_user
