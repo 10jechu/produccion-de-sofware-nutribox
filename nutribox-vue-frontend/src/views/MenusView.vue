@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, onMounted, computed } from 'vue';
 import Swal from 'sweetalert2';
 import apiService from '@/services/api.service';
@@ -11,7 +11,12 @@ const menus = ref([]);
 const userData = ref(null);
 const isLoading = ref(true);
 
-const canAccessMenus = computed(() => hasRequiredMembership('Estandar'));
+// ### INICIO DE LA MODIFICACIÓN ###
+// Básico ('Free') puede ver la página
+const canAccessPage = computed(() => hasRequiredMembership('Free')); 
+// Estándar puede usar el botón "Agregar"
+const canAddMenu = computed(() => hasRequiredMembership('Estandar'));
+// ### FIN DE LA MODIFICACIÓN ###
 
 function formatCurrency(value) {
     const numberValue = Number(value);
@@ -23,7 +28,9 @@ async function loadMenus() {
     isLoading.value = true;
     userData.value = getUserDetail();
     if (!userData.value) { authService.logout(); return; }
-    if (!canAccessMenus.value) { isLoading.value = false; return; }
+    
+    // No bloquees la carga si no es estándar, solo el botón
+    if (!canAccessPage.value) { isLoading.value = false; return; }
 
     try {
         const detailedMenus = await apiService.get('/menus-predeterminados');
@@ -36,6 +43,12 @@ async function loadMenus() {
 }
 
 async function addMenuToProfile(menuDetail) {
+     // Esta validación ya está correcta, comprueba 'Estandar'
+     if (!canAddMenu.value) {
+         Swal.fire('Función Estándar', 'Necesitas un plan Estándar o Premium para agregar menús a tu perfil.', 'info');
+         return;
+     }
+
      if (!menuDetail || !menuDetail.items || menuDetail.items.length === 0) {
         Swal.fire('Error', 'El menú seleccionado está vacío o es inválido.', 'warning');
         return;
@@ -46,7 +59,7 @@ async function addMenuToProfile(menuDetail) {
          router.push('/hijos');
          return;
      }
-     const targetHijoId = userHijos[0].id; // Asigna al primer hijo por defecto
+     const targetHijoId = userHijos[0].id; 
      try {
          Swal.fire({ title: 'Agregando menú...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
          const newLunchbox = await apiService.post('/lunchboxes', {
@@ -54,11 +67,11 @@ async function addMenuToProfile(menuDetail) {
              fecha: new Date().toISOString().split("T")[0],
              estado: "Borrador",
              direccion_id: null,
-             es_predeterminada: false // La copia NUNCA es predeterminada
+             es_predeterminada: false 
          });
          for (const item of menuDetail.items) {
              await apiService.post('/lunchboxes/' + newLunchbox.id + '/items', {
-                 alimento_id: item.alimento_id, // Usa el ID del alimento del item del menú
+                 alimento_id: item.alimento_id, 
                  cantidad: item.cantidad
              });
          }
@@ -84,10 +97,10 @@ onMounted(() => {
             <p class="text-muted">Explora nuestras loncheras recomendadas y agrégalas a tu plan.</p>
         </div>
 
-        <div v-if="!canAccessMenus" class="card p-5 text-center card-shadow">
+        <div v-if="!canAccessPage" class="card p-5 text-center card-shadow">
             <i class="fas fa-lock text-warning mb-3" style="font-size: 48px;"></i>
-            <h3 class="h4">Función de Plan Estándar/Premium</h3>
-            <p class="text-muted mb-4">Solo los planes Estándar y Premium pueden explorar y agregar menús predeterminados.</p>
+            <h3 class="h4">Función Bloqueada</h3>
+            <p class="text-muted mb-4">Esta función no está disponible para tu plan actual.</p>
         </div>
 
         <div v-else-if="isLoading" class="text-center p-5">
@@ -123,8 +136,13 @@ onMounted(() => {
                            <li v-if="menu.items.length > 3" class="text-muted">... y más</li>
                         </ul>
                         <div class="mt-auto">
-                            <button class="btn btn-primary-nb w-100" @click="addMenuToProfile(menu)">
-                                Agregar a Mis Loncheras
+                            <button 
+                                :class="['btn', 'w-100', canAddMenu ? 'btn-primary-nb' : 'btn-secondary']" 
+                                @click="addMenuToProfile(menu)"
+                                :disabled="!canAddMenu"
+                                :title="canAddMenu ? 'Agregar a Mis Loncheras' : 'Requiere Plan Estándar o Premium'"
+                            >
+                                {{ canAddMenu ? 'Agregar a Mis Loncheras' : 'Requiere Estándar' }}
                             </button>
                         </div>
                     </div>

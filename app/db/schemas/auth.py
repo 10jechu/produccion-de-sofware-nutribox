@@ -1,5 +1,4 @@
-
-from pydantic import BaseModel, EmailStr, field_validator
+﻿from pydantic import BaseModel, EmailStr, field_validator
 from typing import Literal
 
 class Token(BaseModel):
@@ -10,7 +9,12 @@ class UserRegister(BaseModel):
     nombre: str
     email: EmailStr
     password: str
-    membresia: Literal["Free", "Premium"] = "Free"
+    
+    # ### INICIO DE LA MODIFICACIÓN ###
+    # Añadimos 'Estandar' a los valores permitidos
+    membresia: Literal["Free", "Estandar", "Premium"] = "Free"
+    # ### FIN DE LA MODIFICACIÓN ###
+    
     rol: Literal["Usuario", "Admin"] = "Usuario"
 
     @field_validator("password")

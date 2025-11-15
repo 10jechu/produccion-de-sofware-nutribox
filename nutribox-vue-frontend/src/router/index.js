@@ -1,4 +1,4 @@
-import { createRouter, createWebHistory } from 'vue-router'
+﻿import { createRouter, createWebHistory } from 'vue-router'
 import { hasRequiredMembership, isAdmin, getUserDetail } from '@/utils/user';
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
@@ -26,14 +26,18 @@ const router = createRouter({
     { path: '/hijos', name: 'hijos', component: HijosView, meta: { requiresAuth: true } },
     { path: '/direcciones', name: 'direcciones', component: DireccionesView, meta: { requiresAuth: true } },
     
-    { path: '/crear-lonchera', name: 'crear-lonchera', component: CrearLoncheraView, meta: { requiresAuth: true, requiredMembership: 'Estandar' } },
+    // ### INICIO DE LA MODIFICACIÓN ###
+    // Corregido: 'Premium' en lugar de 'Estandar' para cumplir con la tabla
+    { path: '/crear-lonchera', name: 'crear-lonchera', component: CrearLoncheraView, meta: { requiresAuth: true, requiredMembership: 'Premium' } },
+    // ### FIN DE LA MODIFICACIÓN ###
+    
     { path: '/mis-loncheras', name: 'mis-loncheras', component: LoncherasView, meta: { requiresAuth: true } },
-    { path: '/menus', name: 'menus', component: MenusView, meta: { requiresAuth: true } },
+    { path: '/menus', name: 'menus', component: MenusView, meta: { requiresAuth: true } }, // Básico puede ver la pág.
     
     { path: '/restricciones', name: 'restricciones', component: RestriccionesView, meta: { requiresAuth: true, requiredMembership: 'Premium' } },
     { path: '/estadisticas', name: 'estadisticas', component: EstadisticasView, meta: { requiresAuth: true, requiredMembership: 'Estandar' } },
     
-    { path: '/alimentos', name: 'alimentos', component: AlimentosView, meta: { requiresAuth: true } },
+    { path: '/alimentos', name: 'alimentos', component: AlimentosView, meta: { requiresAuth: true } }, // Básico puede ver
     
     { path: '/admin/foods', name: 'admin-foods', component: AdminView, meta: { requiresAuth: true, requiresAdmin: true } },
 
@@ -43,7 +47,7 @@ const router = createRouter({
   ]
 })
 
-// L�gica de Guardia de Navegaci�n (Autorizaci�n)
+// Lógica de Guardia de Navegación (Autorización)
 router.beforeEach((to, from, next) => {
   const isAuthenticated = !!localStorage.getItem('nutribox_token');
   const user = getUserDetail(); 
