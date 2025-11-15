@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+﻿from sqlalchemy.orm import Session
 from sqlalchemy import select
 from app.db.models.alimento import Alimento
 
@@ -20,13 +20,16 @@ def exists_by_name(db: Session, nombre: str) -> bool:
 
 def create(db: Session, payload) -> Alimento:
     obj = Alimento(**payload.model_dump())
-    db.add(obj); db.commit(); db.refresh(obj)
+    db.add(obj)
+    db.commit()
+    db.refresh(obj)
     return obj
 
 def update(db: Session, obj: Alimento, payload) -> Alimento:
     for k, v in payload.model_dump(exclude_none=True).items():
         setattr(obj, k, v)
-    db.commit(); db.refresh(obj)
+    db.commit()
+    db.refresh(obj)
     return obj
 
 def soft_delete(db: Session, obj: Alimento) -> None:

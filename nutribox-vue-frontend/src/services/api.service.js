@@ -29,31 +29,27 @@ apiClient.interceptors.request.use(
   }
 );
 
-// INTERCEPTOR para manejar errores - CORREGIDO
+// INTERCEPTOR para manejar errores - MODIFICADO
 apiClient.interceptors.response.use(
   (response) => {
-    console.log('✅ Respuesta exitosa:', response.status, response.config.url);
+    console.log('✅ Response success:', response.status, response.config.url);
     return response;
   },
   (error) => {
-    console.error('❌ Error en petición:', error.response?.status, error.config?.url);
-    console.error('📋 Detalles del error:', error.response?.data);
+    console.error('❌ Response error:', {
+      status: error.response?.status,
+      url: error.config?.url,
+      method: error.config?.method,
+      data: error.response?.data
+    });
     
-    // Manejar error 401 (No autorizado)
+    // ✅ MODIFICADO: No cerrar sesión automáticamente
     if (error.response?.status === 401) {
-      console.warn('⚠️ Token inválido o expirado, cerrando sesión...');
-      localStorage.removeItem('nutribox_token');
-      localStorage.removeItem('nutribox_user');
-      
-      // Solo redirigir si no estamos en login
-      if (!window.location.href.includes('/login')) {
-        window.location.href = '/login';
-      }
-    }
-    
-    // Manejar error 500 (Error del servidor)
-    if (error.response?.status === 500) {
-      console.error('🔥 Error interno del servidor');
+      console.warn('🔐 401 Unauthorized - Pero NO cerramos sesión');
+      // Solo mostrar alerta, no redirigir
+      // localStorage.removeItem('nutribox_token');
+      // localStorage.removeItem('nutribox_user');
+      // window.location.href = '/login';
     }
     
     return Promise.reject(error);

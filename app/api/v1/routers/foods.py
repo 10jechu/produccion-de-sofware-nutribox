@@ -12,9 +12,6 @@ def list_foods(
     only_active: str = Query("true", description="true=activos, false=inactivos, all=todos"),
     db: Session = Depends(get_db)
 ):
-    """
-    Filtros: (LECTURA PERMITIDA A TODOS)
-    """
     return crud.list_(db, only_active=only_active)
 
 @router.get("/{food_id}", response_model=AlimentoRead, summary="Obtener un alimento")
@@ -28,18 +25,30 @@ def get_food(food_id: int, db: Session = Depends(get_db)):
 def create_food(
     payload: AlimentoCreate,
     db: Session = Depends(get_db),
-    admin_user = Depends(get_current_admin_user) # <-- Seguridad Admin
+    admin_user = Depends(get_current_admin_user)
 ):
     if crud.exists_by_name(db, payload.nombre):
         raise HTTPException(status_code=400, detail="El alimento ya existe")
     return crud.create(db, payload)
 
-@router.patch("/{food_id}", response_model=AlimentoRead, summary="Actualizar alimento (Admin)")
+@router.patch("/{food_id}", response_model=AlimentoRead, summary="Actualizar alimento parcialmente (Admin)")
+def update_food_partial(
+    food_id: int, 
+    payload: AlimentoUpdate, 
+    db: Session = Depends(get_db),
+    admin_user = Depends(get_current_admin_user)
+):
+    obj = crud.get_by_id(db, food_id)
+    if not obj:
+        raise HTTPException(status_code=404, detail="No encontrado")
+    return crud.update(db, obj, payload)
+
+@router.put("/{food_id}", response_model=AlimentoRead, summary="Actualizar alimento (Admin)")
 def update_food(
     food_id: int, 
     payload: AlimentoUpdate, 
     db: Session = Depends(get_db),
-    admin_user = Depends(get_current_admin_user) # <-- Seguridad Admin
+    admin_user = Depends(get_current_admin_user)
 ):
     obj = crud.get_by_id(db, food_id)
     if not obj:
@@ -50,7 +59,7 @@ def update_food(
 def delete_food(
     food_id: int, 
     db: Session = Depends(get_db),
-    admin_user = Depends(get_current_admin_user) # <-- Seguridad Admin
+    admin_user = Depends(get_current_admin_user)
 ):
     obj = crud.get_by_id(db, food_id)
     if not obj:
