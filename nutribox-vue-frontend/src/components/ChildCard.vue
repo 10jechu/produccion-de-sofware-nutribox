@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { useRouter } from 'vue-router';
 import { hasRequiredMembership } from '@/utils/user';
 
@@ -12,8 +12,11 @@ const props = defineProps({
 const emit = defineEmits(['view-detail', 'delete-hijo']);
 const router = useRouter();
 
-const canCreateLunchbox = hasRequiredMembership('Estandar');
+// ### INICIO DE LA MODIFICACIÓN ###
+// Corregido: 'Premium' en lugar de 'Estandar'
+const canCreateLunchbox = hasRequiredMembership('Premium');
 const canManageRestrictions = hasRequiredMembership('Premium');
+// ### FIN DE LA MODIFICACIÓN ###
 
 const viewHijoDetail = () => {
     emit('view-detail', props.hijo.id);
@@ -65,9 +68,8 @@ const goToManageRestrictions = () => {
             :class="['btn', 'btn-sm', canCreateLunchbox ? 'btn-primary-nb' : 'btn-secondary']"
             @click="goToCreateLunchbox"
         >
-            <i class="fas fa-plus me-1"></i> {{ canCreateLunchbox ? 'Crear Lonchera' : 'Plan Estandar Requerido' }}
+            <i class="fas fa-plus me-1"></i> {{ canCreateLunchbox ? 'Crear Lonchera' : 'Plan Premium Requerido' }}
         </button>
-
         <button 
             v-if="canManageRestrictions"
             class="btn btn-sm btn-outline-warning"
