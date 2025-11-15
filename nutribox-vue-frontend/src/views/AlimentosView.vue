@@ -186,11 +186,8 @@ const formatPrice = (price) => {
 const loadFoods = async () => {
   try {
     isLoading.value = true;
-    console.log('📥 Cargando alimentos...');
     
     const foodList = await apiService.get('/foods');
-    console.log('✅ Alimentos cargados:', foodList);
-    
     foods.value = foodList;
     filteredFoods.value = foodList;
     
@@ -248,7 +245,6 @@ const editFood = (food) => {
 const saveFood = async () => {
   try {
     saving.value = true;
-    console.log('💾 Guardando alimento:', foodForm.value);
 
     // Validaciones básicas
     if (!foodForm.value.nombre.trim()) {
@@ -301,7 +297,6 @@ const deleteFood = async (food) => {
   if (result.isConfirmed) {
     try {
       Swal.showLoading();
-      console.log('🗑️ Desactivando alimento:', food.id);
       
       await apiService.delete(`/foods/${food.id}`);
       
