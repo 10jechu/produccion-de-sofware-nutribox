@@ -1,7 +1,7 @@
-// src/services/api.service.js
+﻿// src/services/api.service.js
 
 // Obtener la URL base de las variables de entorno de Vite
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1'; // URL por defecto si no esta definida
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000/api/v1';
 
 // Funcion auxiliar para obtener Headers
 const getHeaders = (isFormData = false) => {
@@ -11,7 +11,6 @@ const getHeaders = (isFormData = false) => {
   }
   const token = localStorage.getItem('nutribox_token');
   if (token) {
-    // Usamos concatenacion simple para la autorizacion
     headers['Authorization'] = 'Bearer ' + token;
   }
   return headers;
@@ -23,39 +22,21 @@ const handleResponse = async (response) => {
     const errorData = await response.json().catch(() => ({ detail: response.statusText }));
     throw new Error(errorData.detail || 'Error en la peticion');
   }
-  // Si la respuesta es 204 No Content, devuelve un objeto vacio
   if (response.status === 204) {
     return {};
   }
   return response.json();
 };
 
-// Funcion auxiliar para asegurar que el endpoint NO tenga prefijos de idioma corruptos
-const prepareEndpoint = (endpoint) => {
-    // Asegura que no haya prefijos de idioma como /v_en/ o /v_es/ en la URL
-    let finalEndpoint = endpoint.replace(/v_(en|es)\//g, ''); 
-    
-    const startsWithSlash = finalEndpoint.startsWith('/');
-    const endsWithSlash = finalEndpoint.endsWith('/');
-    
-    // Garantizar el slash inicial
-    finalEndpoint = startsWithSlash ? finalEndpoint : '/' + finalEndpoint;
-    
-    // Garantizar el slash final si no hay query params y no termina en slash
-    if (finalEndpoint.length > 1 && !endsWithSlash && !finalEndpoint.includes('?')) {
-        finalEndpoint = finalEndpoint + '/';
-    }
-    
-    return finalEndpoint;
-}
+// --- ELIMINADA LA FUNCION 'prepareEndpoint' ---
 
 // Servicio API
 const apiService = {
   get: async (endpoint, params = null) => {
-    const finalEndpoint = prepareEndpoint(endpoint);
-    let url = API_BASE_URL + finalEndpoint; // CONCATENACION
+    // CORREGIDO: No se usa prepareEndpoint
+    let url = API_BASE_URL + endpoint; 
     if (params) {
-      url += '?' + (new URLSearchParams(params).toString()); // CONCATENACION
+      url += '?' + (new URLSearchParams(params).toString());
     }
     const response = await fetch(url, {
       method: 'GET',
@@ -65,8 +46,8 @@ const apiService = {
   },
 
   post: async (endpoint, body) => {
-    const finalEndpoint = prepareEndpoint(endpoint);
-    const response = await fetch(API_BASE_URL + finalEndpoint, { // CONCATENACION
+    // CORREGIDO: No se usa prepareEndpoint
+    const response = await fetch(API_BASE_URL + endpoint, { 
       method: 'POST',
       headers: getHeaders(),
       body: JSON.stringify(body),
@@ -75,8 +56,8 @@ const apiService = {
   },
 
   postLogin: async (endpoint, formDataParams) => {
-    const finalEndpoint = prepareEndpoint(endpoint);
-    const response = await fetch(API_BASE_URL + finalEndpoint, { // CONCATENACION
+    // CORREGIDO: No se usa prepareEndpoint
+    const response = await fetch(API_BASE_URL + endpoint, { 
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -87,8 +68,8 @@ const apiService = {
   },
 
   patch: async (endpoint, body) => {
-    const finalEndpoint = prepareEndpoint(endpoint);
-    const response = await fetch(API_BASE_URL + finalEndpoint, { // CONCATENACION
+    // CORREGIDO: No se usa prepareEndpoint
+    const response = await fetch(API_BASE_URL + endpoint, { 
       method: 'PATCH',
       headers: getHeaders(),
       body: JSON.stringify(body),
@@ -97,8 +78,8 @@ const apiService = {
   },
 
   delete: async (endpoint) => {
-    const finalEndpoint = prepareEndpoint(endpoint);
-    const response = await fetch(API_BASE_URL + finalEndpoint, { // CONCATENACION
+    // CORREGIDO: No se usa prepareEndpoint
+    const response = await fetch(API_BASE_URL + endpoint, { 
       method: 'DELETE',
       headers: getHeaders(),
     });

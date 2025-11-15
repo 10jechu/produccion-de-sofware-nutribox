@@ -23,11 +23,15 @@ class DireccionMini(BaseModel):
     direccion: str
     ciudad: str
 
+# --- MODIFICADO: Añadidos campos de promedios ---
 class ResumenUsuario(BaseModel):
     total_hijos: int
     total_direcciones: int
     total_loncheras: int
     loncheras_este_mes: int
+    avg_kcal: float
+    avg_proteinas: float
+    avg_carbos: float
 
 class UserDetail(BaseModel):
     id: int
@@ -72,7 +76,7 @@ class NutricionTotal(BaseModel):
     calorias: float
     proteinas: float
     carbohidratos: float
-    costo_total: float # NUEVO CAMPO: COSTO TOTAL
+    costo_total: float
 
 class ItemNutricional(BaseModel):
     alimento_id: int
@@ -81,7 +85,7 @@ class ItemNutricional(BaseModel):
     kcal: float
     proteinas: float
     carbos: float
-    costo: float # NUEVO CAMPO: COSTO POR UNIDAD
+    costo: float
 
 class LunchboxDetailFull(BaseModel):
     id: int
@@ -93,7 +97,6 @@ class LunchboxDetailFull(BaseModel):
     nutricion_total: NutricionTotal
     alertas: list[str] = []
 
-# ### AÑADIDO: Schemas para Estadísticas Avanzadas ###
 class DailyStat(BaseModel):
     fecha: str
     calorias: float
@@ -104,11 +107,9 @@ class DailyStat(BaseModel):
 class MacroPct(BaseModel):
     proteinas_pct: float
     carbos_pct: float
-    # Nota: No incluimos grasas_pct porque el modelo Alimento no lo tiene
 
 class AdvancedStatsResponse(BaseModel):
     hijo_id: int
     hijo_nombre: str
     consumo_diario: List[DailyStat]
     macro_porcentajes: MacroPct
-# ### FIN DE LO AÑADIDO ###

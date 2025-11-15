@@ -2,7 +2,8 @@
 import { ref, onMounted, computed } from 'vue';
 import Swal from 'sweetalert2';
 import apiService from '@/services/api.service';
-import { getUserDetail, hasRequiredMembership } from '@/utils/user'; 
+// --- MODIFICADO: Añadido 'isAdmin' ---
+import { getUserDetail, hasRequiredMembership, isAdmin } from '@/utils/user'; 
 import authService from '@/services/auth.service';
 import { useRouter } from 'vue-router';
 
@@ -11,6 +12,8 @@ const isLoading = ref(true);
 const router = useRouter();
 
 const canSeeSummary = computed(() => hasRequiredMembership('Estandar'));
+// --- AÑADIDO: Computada para saber si es Admin ---
+const isUserAdmin = computed(() => isAdmin());
 
 const getMembershipBadgeClass = (tipo) => {
     if (tipo === 'Premium') {
@@ -64,8 +67,8 @@ onMounted(() => {
         </div>
 
         <div v-else-if="userData" class="row g-4">
-            <div class="col-lg-6">
-                <div class="card p-4 card-shadow h-100">
+            <div :class="isUserAdmin ? 'col-lg-12' : 'col-lg-6'">
+            <div class="card p-4 card-shadow h-100">
                     <h5 class="card-title fw-bold mb-3">Informacion Personal y Cuenta</h5>
                     <div class="text-center mb-4">
                         <div class="rounded-circle bg-light d-inline-block p-4 mb-3">
@@ -86,8 +89,8 @@ onMounted(() => {
                 </div>
             </div>
             
-            <div class="col-lg-6">
-                <div v-if="canSeeSummary" class="card p-4 card-shadow h-100">
+            <div v-if="!isUserAdmin" class="col-lg-6">
+            <div v-if="canSeeSummary" class="card p-4 card-shadow h-100">
                     <h5 class="card-title fw-bold mb-3">Resumen y Direcciones</h5>
                     <div class="d-flex justify-content-between py-2 border-bottom">
                         <span>Total Hijos:</span>

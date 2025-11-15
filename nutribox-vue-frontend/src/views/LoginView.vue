@@ -1,9 +1,9 @@
-<script setup>
+﻿<script setup>
 import authService from '@/services/auth.service'; // @ es un alias para la carpeta src/
 import Swal from 'sweetalert2'; // Para notificaciones
-
 import { ref } from 'vue';
 import { useRouter } from 'vue-router'; // Para redirigir
+import { isAdmin } from '@/utils/user'; // <-- AÑADIDO
 
 const email = ref('');
 const password = ref('');
@@ -25,16 +25,19 @@ const handleLogin = async () => {
   });
 
   try {
-    const response = await authService.login(email.value, password.value);
-    // El token ya se guarda dentro de authService.login gracias a .pipe(tap(...)) o lógica interna
-
-    // (Opcional) Obtener y guardar datos del usuario si tu API lo permite
-    // await authService.fetchAndSaveUser(); // Necesitarías implementar esta función
+    await authService.login(email.value, password.value);
+    // El token y el UserDetail ya se guardan en authService.login
 
     Swal.close(); // Cerrar loading
 
-    // Redirigir al dashboard
-    router.push('/dashboard');
+    // ### INICIO DE LA MODIFICACIÓN ###
+    // Redirigir según el rol
+    if (isAdmin()) {
+      router.push('/admin/foods');
+    } else {
+      router.push('/dashboard');
+    }
+    // ### FIN DE LA MODIFICACIÓN ###
 
   } catch (error) {
     Swal.close(); // Cerrar loading

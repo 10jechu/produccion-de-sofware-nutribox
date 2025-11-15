@@ -5,13 +5,22 @@ import apiService from '@/services/api.service';
 import Swal from 'sweetalert2';
 import authService from '@/services/auth.service';
 
-const canViewAdvanced = hasRequiredMembership('Premium'); // RF7.2
-const canViewBasic = hasRequiredMembership('Estandar'); // RF7.1
+const canViewAdvanced = hasRequiredMembership('Premium');
+const canViewBasic = hasRequiredMembership('Estandar');
 
+// --- Refs para Plan Premium ---
 const hijos = ref([]);
 const selectedHijoId = ref(null);
 const isLoading = ref(false); // Para los gráficos
-const isLoadingData = ref(false); // Para el dropdown
+const isLoadingData = ref(false); // Para el dropdown de hijos
+
+// --- Refs para Plan Estándar ---
+const isLoadingBasic = ref(true);
+const basicStats = ref({
+    avg_kcal: 0,
+    avg_proteinas: 0,
+    avg_carbos: 0
+});
 
 let caloriesChartInstance = null;
 let macrosChartInstance = null;
@@ -22,18 +31,13 @@ const colorSecondary = '#FF9800';
 const colorAccent = '#2196F3';  
 const colorLightGreen = 'rgba(76, 175, 80, 0.2)';
 
-// --- ### INICIO DE LA CORRECCIÓN ### ---
-// Esta función ahora llama a la API, igual que HijosView.vue
+// --- Lógica para Plan Premium ---
 async function loadHijos() {
   isLoadingData.value = true;
-  const user = getUserDetail(); // Solo para obtener el ID
-  if (!user) { 
-      authService.logout(); 
-      return; 
-  }
+  const user = getUserDetail();
+  if (!user) { authService.logout(); return; }
   
   try {
-    // Llama a la API para obtener la lista FRESCA de hijos
     hijos.value = await apiService.get('/children?usuario_id=' + user.id);
     isLoadingData.value = false;
   } catch (error) {
@@ -41,14 +45,9 @@ async function loadHijos() {
     Swal.fire('Error', 'No se pudieron cargar los hijos', 'error');
   }
 }
-// --- ### FIN DE LA CORRECCIÓN ### ---
 
-// --- Lógica para buscar datos y renderizar gráficos ---
 async function fetchAndRenderStats() {
-  if (!selectedHijoId.value || !canViewAdvanced) {
-    return;
-  }
-  
+  if (!selectedHijoId.value || !canViewAdvanced) return;
   isLoading.value = true;
   try {
     const stats = await apiService.get('/children/' + selectedHijoId.value + '/statistics');
@@ -60,28 +59,50 @@ async function fetchAndRenderStats() {
   }
 }
 
-// --- Observador ---
+// --- ### INICIO MODIFICACIÓN: Lógica para Plan Estándar ### ---
+async function loadBasicStats() {
+    isLoadingBasic.value = true;
+    const user = getUserDetail();
+    if (!user) { authService.logout(); return; }
+
+    try {
+        // Refrescar los datos del usuario para obtener los promedios más recientes
+        const freshDetail = await apiService.get('/users/' + user.id + '/detail');
+        authService.saveUserDetail(freshDetail); // Actualiza localStorage
+
+        if (freshDetail.resumen) {
+            basicStats.value = {
+                avg_kcal: freshDetail.resumen.avg_kcal,
+                avg_proteinas: freshDetail.resumen.avg_proteinas,
+                avg_carbos: freshDetail.resumen.avg_carbos
+            };
+        }
+        isLoadingBasic.value = false;
+    } catch (error) {
+        isLoadingBasic.value = false;
+        Swal.fire('Error', 'No se pudieron cargar las estadísticas básicas.', 'error');
+    }
+}
+// --- ### FIN MODIFICACIÓN ### ---
+
 watch(selectedHijoId, fetchAndRenderStats);
 
-// --- Montaje inicial ---
 onMounted(() => {
     if (canViewAdvanced.value) {
-        loadHijos(); // Llama a la nueva función corregida
+        loadHijos();
+    } else if (canViewBasic.value) {
+        loadBasicStats(); // Carga las estadísticas básicas si es Estándar
     }
 });
 
-// --- Lógica de Gráficos (AHORA ACEPTA DATOS) ---
 const renderCharts = (statsData) => {
     if (typeof Chart === 'undefined' || !statsData) {
         console.error("Chart.js no está definido o no hay datos");
         return;
     }
-
-    // --- Gráfico de Calorías (Datos Reales) ---
     const caloriesCtx = document.getElementById('caloriesChart')?.getContext('2d');
     if (caloriesCtx) {
         if (caloriesChartInstance) caloriesChartInstance.destroy();
-        
         caloriesChartInstance = new Chart(caloriesCtx, {
             type: 'line',
             data: {
@@ -98,14 +119,10 @@ const renderCharts = (statsData) => {
             options: { scales: { y: { beginAtZero: false } } }
         });
     }
-
-    // --- Gráfico de Macros (Datos Reales) ---
     const macrosCtx = document.getElementById('macrosChart')?.getContext('2d');
     if (macrosCtx) {
         if (macrosChartInstance) macrosChartInstance.destroy();
-
         const macroData = statsData.macro_porcentajes;
-        
         macrosChartInstance = new Chart(macrosCtx, {
             type: 'doughnut',
             data: {
@@ -120,19 +137,7 @@ const renderCharts = (statsData) => {
             },
             options: {
                  responsive: true,
-                 plugins: {
-                     legend: { position: 'top' },
-                     tooltip: {
-                         callbacks: {
-                             label: function(context) {
-                                 let label = context.label || '';
-                                 if (label) { label += ': '; }
-                                 if (context.parsed !== null) { label += context.parsed + '%'; }
-                                 return label;
-                             }
-                         }
-                     }
-                 }
+                 plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: (context) => (context.label || '') + ': ' + (context.parsed || 0) + '%' } } }
             }
         });
     }
@@ -156,7 +161,6 @@ const renderCharts = (statsData) => {
                     <option v-for="h in hijos" :key="h.id" :value="h.id">{{ h.nombre }}</option>
                 </select>
             </div>
-
             <div v-if="isLoading" class="text-center p-5">
                 <i class="fas fa-spinner fa-spin fa-2x text-primary-nb"></i>
                 <p class="mt-2 text-muted">Cargando estadísticas...</p>
@@ -185,18 +189,23 @@ const renderCharts = (statsData) => {
         
         <div v-else-if="canViewBasic" class="card p-5 text-center card-shadow">
             <h3 class="h4">Estadísticas Básicas (Promedio por Lonchera)</h3>
-            <p class="text-muted mb-4">Esta es la vista de estadísticas básicas para el Plan Estándar. Para gráficos avanzados, actualiza a Premium.</p>
-            <div class="row justify-content-center">
+            <p class="text-muted mb-4">Este es el promedio de todas tus loncheras confirmadas. Para gráficos avanzados, actualiza a Premium.</p>
+            
+            <div v-if="isLoadingBasic" class="text-center p-5">
+                <i class="fas fa-spinner fa-spin fa-2x text-primary-nb"></i>
+                <p class="mt-2 text-muted">Calculando promedios...</p>
+            </div>
+            
+            <div v-else class="row justify-content-center">
                  <div class="col-md-6">
                     <ul class="list-group list-group-flush">
-                         <li class="list-group-item">Promedio Kcal: <strong>410 kcal</strong> (Simulado)</li>
-                         <li class="list-group-item">Promedio Proteínas: <strong>15 g</strong> (Simulado)</li>
-                         <li class="list-group-item">Promedio Carbohidratos: <strong>40 g</strong> (Simulado)</li>
+                         <li class="list-group-item">Promedio Kcal: <strong>{{ basicStats.avg_kcal }} kcal</strong></li>
+                         <li class="list-group-item">Promedio Proteínas: <strong>{{ basicStats.avg_proteinas }} g</strong></li>
+                         <li class="list-group-item">Promedio Carbohidratos: <strong>{{ basicStats.avg_carbos }} g</strong></li>
                      </ul>
                  </div>
             </div>
         </div>
-
         <div v-else class="card p-5 text-center card-shadow">
             <i class="fas fa-lock text-warning mb-3" style="font-size: 48px;"></i>
             <h3 class="h4">Función de Plan Estándar o Premium</h3>

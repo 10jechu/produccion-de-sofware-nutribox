@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref, onMounted, computed } from 'vue';
 import Swal from 'sweetalert2';
 import apiService from '@/services/api.service';
@@ -30,6 +30,31 @@ onMounted(() => {
     loadFoods();
 });
 
+// ### INICIO DE LA MODIFICACIÓN ###
+// Nueva función para ver detalles (para todos los usuarios)
+function viewFoodDetail(food) {
+    if (!food) return;
+
+    const swalHtml = `
+        <div class="text-start p-3">
+            <p class="mb-2"><strong>Calorías:</strong> ${food.kcal.toFixed(1)} kcal</p>
+            <p class="mb-2"><strong>Proteínas:</strong> ${food.proteinas.toFixed(1)} g</p>
+            <p class="mb-2"><strong>Carbohidratos:</strong> ${food.carbos.toFixed(1)} g</p>
+            <hr>
+            <p class="mb-0"><strong>Costo por Unidad:</strong> ${formatCurrency(food.costo)}</p>
+        </div>
+    `;
+
+    Swal.fire({
+        title: food.nombre,
+        html: swalHtml,
+        icon: 'info',
+        confirmButtonColor: "#4CAF50"
+    });
+}
+// ### FIN DE LA MODIFICACIÓN ###
+
+// Esta función ahora es solo para acciones de Admin (Editar/Eliminar)
 const handleFoodAction = (action) => {
     Swal.fire('Funcion de Administrador', 'El CRUD de alimentos (' + action + ') debe implementarse en la vista AdminView.vue para el rol ' + (isUserAdmin.value ? 'Admin' : 'Usuario') + '.', 'info');
 }
@@ -73,7 +98,7 @@ const handleFoodAction = (action) => {
                             <td>{{ food.carbos }} g</td>
                             <td>{{ formatCurrency(food.costo) }}</td>
                             <td>
-                                <button class="btn btn-sm btn-outline-info me-1" @click="handleFoodAction('Ver Detalle')">
+                                <button class="btn btn-sm btn-outline-info me-1" @click="viewFoodDetail(food)" title="Ver Detalle">
                                     <i class="fas fa-eye"></i>
                                 </button>
                                 <span v-if="isUserAdmin">

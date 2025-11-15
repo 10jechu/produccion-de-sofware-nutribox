@@ -9,8 +9,8 @@ const userData = ref(null);
 const isLoading = ref(true);
 
 const canSeeEstandarFeatures = computed(() => hasRequiredMembership('Estandar'));
-// --- MODIFICADO: Esta variable ya no se necesita para la tarjeta de bloqueo ---
-// const canSeePremiumFeatures = computed(() => hasRequiredMembership('Premium'));
+// --- AÑADIDO: Computada para ver acciones Premium ---
+const canSeePremiumFeatures = computed(() => hasRequiredMembership('Premium'));
 
 const loadDashboard = async () => {
   isLoading.value = true;
@@ -135,7 +135,20 @@ onMounted(() => {
           </div>
           
           <div class="col-md-6">
-              <div v-if="canSeeEstandarFeatures" class="card p-5 text-center card-shadow h-100">
+              
+              <div v-if="canSeePremiumFeatures" class="card p-4 card-shadow h-100">
+                  <h5 class="mb-3 fw-bold">Acciones Rápidas</h5>
+                  <div class="d-grid gap-2">
+                      <router-link to="/crear-lonchera" class="btn btn-primary-nb py-2">
+                          <i class="fas fa-plus me-2"></i> Crear Nueva Lonchera
+                      </router-link>
+                      <router-link to="/hijos" class="btn btn-outline-primary py-2">
+                          <i class="fas fa-child me-2"></i> Gestionar Hijos
+                      </router-link>
+                  </div>
+              </div>
+
+              <div v-else-if="canSeeEstandarFeatures" class="card p-5 text-center card-shadow h-100">
                    <i class="fas fa-lock text-warning mb-3" style="font-size: 48px;"></i>
                    <h5 class="mb-3 fw-bold">Personalización de Loncheras</h5>
                    <p class="text-muted mb-4">
@@ -143,6 +156,7 @@ onMounted(() => {
                    </p>
                    <button class="btn btn-warning text-dark mt-auto" disabled>Actualizar a Premium</button>
               </div>
+              
               <div v-else class="card p-4 card-shadow h-100 text-center d-flex flex-column justify-content-center">
                   <i class="fas fa-book-open text-primary-nb mb-3" style="font-size: 48px;"></i>
                   <h5 class="mb-3 fw-bold">Explora los Menús</h5>

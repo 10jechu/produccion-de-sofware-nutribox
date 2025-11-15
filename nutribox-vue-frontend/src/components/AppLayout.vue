@@ -34,7 +34,8 @@ const logout = () => {
             
             <router-link v-if="!isUserAdmin && canSeeEstandar" to="/alimentos" class="nav-link text-dark"><i class="fas fa-utensils fa-fw me-2"></i> Alimentos</router-link>
             <router-link v-if="!isUserAdmin" to="/menus" class="nav-link text-dark"><i class="fas fa-book-open fa-fw me-2"></i> Menús</router-link>
-            <router-link v-if="!isUserAdmin" to="/perfil" class="nav-link text-dark"><i class="fas fa-user-circle fa-fw me-2"></i> Mi Perfil</router-link>
+            
+            <router-link to="/perfil" class="nav-link text-dark"><i class="fas fa-user-circle fa-fw me-2"></i> Mi Perfil</router-link>
             
             <router-link v-if="isUserAdmin" to="/admin/foods" class="nav-link text-dark mt-3">
                 <i class="fas fa-cog fa-fw me-2"></i> Admin Panel

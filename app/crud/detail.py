@@ -44,6 +44,46 @@ def get_user_detail(db: Session, user_id: int) -> dict | None:
         )
     )
     
+    # --- INICIO DE MODIFICACIÓN: Lógica de Estadísticas Básicas ---
+    hijo_ids = [h.id for h in hijos]
+    
+    # Inicializa los valores en 0
+    avg_kcal = 0.0
+    avg_prot = 0.0
+    avg_carbs = 0.0
+
+    # SOLO calcular si el usuario TIENE hijos
+    if len(hijo_ids) > 0:
+        total_nutrition_stats = (
+            db.query(
+                func.sum(Alimento.kcal * LoncheraAlimento.cantidad).label('total_kcal'),
+                func.sum(Alimento.proteinas * LoncheraAlimento.cantidad).label('total_proteinas'),
+                func.sum(Alimento.carbos * LoncheraAlimento.cantidad).label('total_carbos')
+            )
+            .join(LoncheraAlimento, Alimento.id == LoncheraAlimento.alimento_id)
+            .join(Lonchera, Lonchera.id == LoncheraAlimento.lonchera_id)
+            .where(
+                Lonchera.hijo_id.in_(hijo_ids),
+                Lonchera.estado.in_(['Confirmada', 'Archivada'])
+            )
+            .first()
+        )
+
+        total_loncheras_confirmadas = db.scalar(
+             select(func.count(Lonchera.id))
+            .where(
+                Lonchera.hijo_id.in_(hijo_ids),
+                Lonchera.estado.in_(['Confirmada', 'Archivada'])
+            )
+        ) or 0
+
+        # Prevenir división por cero
+        if total_loncheras_confirmadas > 0:
+            avg_kcal = (total_nutrition_stats.total_kcal or 0) / total_loncheras_confirmadas
+            avg_prot = (total_nutrition_stats.total_proteinas or 0) / total_loncheras_confirmadas
+            avg_carbs = (total_nutrition_stats.total_carbos or 0) / total_loncheras_confirmadas
+    # --- FIN DE MODIFICACIÓN ---
+
     return {
         "id": user.id,
         "nombre": user.nombre,
@@ -56,7 +96,10 @@ def get_user_detail(db: Session, user_id: int) -> dict | None:
             "total_hijos": len(hijos),
             "total_direcciones": len(direcciones),
             "total_loncheras": total_loncheras or 0,
-            "loncheras_este_mes": loncheras_mes or 0
+            "loncheras_este_mes": loncheras_mes or 0,
+            "avg_kcal": round(avg_kcal, 1),
+            "avg_proteinas": round(avg_prot, 1),
+            "avg_carbos": round(avg_carbs, 1)
         }
     }
 
@@ -126,13 +169,13 @@ def get_lunchbox_detail_full(db: Session, lunchbox_id: int) -> dict | None:
     
     items = db.execute(
         select(
-            LoncheraAlimento.alimento_id,
-            Alimento.nombre,
-            LoncheraAlimento.cantidad,
-            Alimento.kcal,
-            Alimento.proteinas,
-            Alimento.carbos,
-            Alimento.costo # NUEVO: SELECCIONAR COSTO
+            LoncheraAlimento.alimento_id, # 0
+            Alimento.nombre,             # 1
+            LoncheraAlimento.cantidad,   # 2
+            Alimento.kcal,               # 3
+            Alimento.proteinas,          # 4
+            Alimento.carbos,             # 5
+            Alimento.costo               # 6
         )
         .join(Alimento, Alimento.id == LoncheraAlimento.alimento_id)
         .where(LoncheraAlimento.lonchera_id == lunchbox_id)
@@ -146,7 +189,7 @@ def get_lunchbox_detail_full(db: Session, lunchbox_id: int) -> dict | None:
             "kcal": i[3],
             "proteinas": i[4],
             "carbos": i[5],
-            "costo": i[6] # AGREGAMOS COSTO POR UNIDAD
+            "costo": i[6]
         }
         for i in items
     ]
@@ -154,7 +197,7 @@ def get_lunchbox_detail_full(db: Session, lunchbox_id: int) -> dict | None:
     total_cal = sum(i[3] * i[2] for i in items)
     total_prot = sum(i[4] * i[2] for i in items)
     total_carb = sum(i[5] * i[2] for i in items)
-    total_cost = sum(i[6] * i[2] for i in items) # NUEVO: CÁLCULO DE COSTO TOTAL
+    total_cost = sum(i[6] * i[2] for i in items)
     
     direccion_data = None
     if lonchera.direccion_id:
@@ -191,27 +234,18 @@ def get_lunchbox_detail_full(db: Session, lunchbox_id: int) -> dict | None:
             "calorias": round(total_cal, 2),
             "proteinas": round(total_prot, 2),
             "carbohidratos": round(total_carb, 2),
-            "costo_total": round(total_cost, 2) # AÑADIMOS EL COSTO TOTAL
+            "costo_total": round(total_cost, 2)
         },
         "alertas": alertas
     }
 
-# ### AÑADIDO: Lógica de Estadísticas Avanzadas ###
 def get_advanced_statistics(db: Session, hijo_id: int) -> dict:
-    """
-    Calcula estadísticas avanzadas para un hijo, basado en loncheras
-    confirmadas o archivadas.
-    """
-    # 1. Verificar que el hijo exista
     hijo = db.get(Hijo, hijo_id)
     if not hijo:
         raise ValueError("Hijo no encontrado")
         
-    # 2. Definir el rango de fechas (ej. últimos 30 días)
     fecha_limite = datetime.utcnow().date() - timedelta(days=30)
 
-    # 3. Query principal: Suma de nutrición por día
-    #    Solo contamos loncheras que NO estén en 'Borrador'
     stmt = (
         select(
             Lonchera.fecha,
@@ -220,11 +254,11 @@ def get_advanced_statistics(db: Session, hijo_id: int) -> dict:
             func.sum(Alimento.carbos * LoncheraAlimento.cantidad).label('total_carbos'),
             func.sum(Alimento.costo * LoncheraAlimento.cantidad).label('total_costo')
         )
-        .join(LoncheraAlimento, Lonchera.id == LoncheraAlimento.lonchera_id)
-        .join(Alimento, Alimento.id == LoncheraAlimento.alimento_id)
+        .join(LoncheraAlimento, Alimento.id == LoncheraAlimento.alimento_id)
+        .join(Lonchera, Lonchera.id == LoncheraAlimento.lonchera_id)
         .where(
             Lonchera.hijo_id == hijo_id,
-            Lonchera.estado.in_(['Confirmada', 'Archivada']), # ¡CLAVE!
+            Lonchera.estado.in_(['Confirmada', 'Archivada']),
             Lonchera.fecha >= fecha_limite
         )
         .group_by(Lonchera.fecha)
@@ -233,7 +267,6 @@ def get_advanced_statistics(db: Session, hijo_id: int) -> dict:
     
     consumo_diario_result = db.execute(stmt).all()
     
-    # Formatear datos para el gráfico de líneas (consumo diario)
     consumo_diario = [
         {
             "fecha": row.fecha.isoformat(),
@@ -245,7 +278,6 @@ def get_advanced_statistics(db: Session, hijo_id: int) -> dict:
         for row in consumo_diario_result
     ]
 
-    # 4. Query para totales de macronutrientes (gráfico de dona)
     total_proteinas = sum(item['proteinas'] for item in consumo_diario)
     total_carbos = sum(item['carbos'] for item in consumo_diario)
     
